@@ -26,4 +26,17 @@ func main() {
 		log.Fatalf("failed to seed user data: %v", err)
 	}
 
+	staff := &model.Staff{
+		ID:        1,
+		Name:      "Bob",
+		Age:       "20",
+		IsActive:  "true",
+		CreatedAt: nil,
+		UpdatedAt: nil,
+		DeletedAt: nil,
+	}
+	if err := db.Create(staff).Error; err != nil {
+		log.Fatalf("failed to seed staff data: %v", err)
+	}
+
 }

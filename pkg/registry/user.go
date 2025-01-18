@@ -6,6 +6,10 @@ import (
 	"golang-clean-architecture/pkg/usecase/usecase"
 )
 
+/*
+*
+UserControllerでDIするUsecaseとRepositryをコンストラクタインジェクションでDI
+*/
 func (r *registry) NewUserController() controller.User {
 	u := usecase.NewUserUsecase(
 		repository.NewUserRepository(r.db),

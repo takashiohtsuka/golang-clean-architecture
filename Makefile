@@ -12,18 +12,21 @@ setup_db:
 	./bin/init_db.sh
 
 # Migrate scheme to database.
+#テーブル追加
 migrate_schema_up:
 	goose -dir=db/migrations/ mysql "root:root@tcp(127.0.0.1:3306)/golang_clean_architecture" up
 
 migrate_schema_down:
 	goose -dir=db/migrations/ mysql "root:root@tcp(127.0.0.1:3306)/golang_clean_architecture" down
 
+#テーブル削除
 migrate_schema_reset:
 	goose -dir=db/migrations/ mysql "root:root@tcp(127.0.0.1:3306)/golang_clean_architecture" reset
 
 migrate_schema_status:
 	goose -dir=db/migrations/ mysql "root:root@tcp(127.0.0.1:3306)/golang_clean_architecture" status
 
+# ドメインモデルを使って流し込まれている
 seed:
 	go run ./cmd/seed/main.go
 

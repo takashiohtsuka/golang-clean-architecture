@@ -9,6 +9,10 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+/*
+*
+mysqlの設定とgormの設定
+*/
 func NewDB() *gorm.DB {
 	DBMS := "mysql"
 	mySqlConfig := &mysql.Config{

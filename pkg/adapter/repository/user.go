@@ -7,10 +7,14 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+/*
+repositoryの具象classとなるファイル
+*/
 type userRepository struct {
 	db *gorm.DB
 }
 
+// コンストラクタ
 func NewUserRepository(db *gorm.DB) repository.UserRepository {
 	return &userRepository{db}
 }

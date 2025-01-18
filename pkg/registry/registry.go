@@ -18,8 +18,13 @@ func NewRegistry(db *gorm.DB) Registry {
 	return &registry{db}
 }
 
+/*
+*
+コンストラクタインジェクションでDIしている
+*/
 func (r *registry) NewAppController() controller.AppController {
 	return controller.AppController{
-		User: r.NewUserController(),
+		User:  r.NewUserController(),
+		Staff: r.NewStaffController(),
 	}
 }

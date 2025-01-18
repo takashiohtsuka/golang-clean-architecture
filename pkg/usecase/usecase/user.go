@@ -11,11 +11,13 @@ type userUsecase struct {
 	dBRepository   repository.DBRepository
 }
 
+// interface定義
 type User interface {
 	List(u []*model.User) ([]*model.User, error)
 	Create(u *model.User) (*model.User, error)
 }
 
+// コンストラクタ
 func NewUserUsecase(r repository.UserRepository, d repository.DBRepository) User {
 	return &userUsecase{r, d}
 }

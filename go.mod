@@ -1,13 +1,11 @@
 module golang-clean-architecture
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.3.3
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/jinzhu/gorm v1.9.10
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/spf13/viper v1.4.0
-	github.com/stretchr/testify v1.4.0
 )
 
 require (
@@ -21,7 +19,6 @@ require (
 	github.com/mattn/go-isatty v0.0.10 // indirect
 	github.com/mitchellh/mapstructure v1.1.2 // indirect
 	github.com/pelletier/go-toml v1.4.0 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cast v1.3.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
