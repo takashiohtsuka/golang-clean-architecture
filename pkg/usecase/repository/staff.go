@@ -8,4 +8,6 @@ type StaffRepository interface {
 	//スライス(可変調配列)で構造体のentityが引数
 	FindAll(s []*model.Staff) ([]*entity.Staff, error)
 	Create(u *entity.Staff) (*entity.Staff, error)
+	Update(s *entity.Staff) (*entity.Staff, error)
+	FindOne(conditions map[string]interface{}) (*entity.Staff, error)
 }

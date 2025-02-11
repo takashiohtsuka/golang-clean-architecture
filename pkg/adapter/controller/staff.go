@@ -1,6 +1,7 @@
 package controller
 
 import (
+	requestStaff "golang-clean-architecture/pkg/adapter/request/staffs"
 	"golang-clean-architecture/pkg/domain/entity"
 	"golang-clean-architecture/pkg/domain/model"
 	"golang-clean-architecture/pkg/usecase/usecase"
@@ -14,6 +15,7 @@ type staffController struct {
 type Staff interface {
 	GetStaffs(c Context) error
 	CreateStaff(c Context) error
+	UpdateStaff(c Context) error
 }
 
 func NewStaffController(st usecase.Staff) Staff {
@@ -35,7 +37,7 @@ func (sc *staffController) GetStaffs(ctx Context) error {
 	return ctx.JSON(http.StatusOK, entityStaffs)
 }
 
-// curl -X POST -H "Content-Type: application/json" -d '{"name":"James8", "age":"30", "is_active":"false", "created_at": "2024-12-22T12:00:00Z", "updated_at": "2024-12-22T12:00:00Z"}' http://localhost:8080/staffs
+// curl -X POST -H "Content-Type: application/json" -d '{"name":"James10", "age":"30", "is_active":"false", "created_at": "2024-12-22T12:00:00Z", "updated_at": "2024-12-22T12:00:00Z"}' http://localhost:8080/staffs
 func (sc *staffController) CreateStaff(ctx Context) error {
 	var params entity.Staff
 
@@ -49,4 +51,20 @@ func (sc *staffController) CreateStaff(ctx Context) error {
 	}
 
 	return ctx.JSON(http.StatusCreated, u)
+}
+
+// curl -X PUT -H "Content-Type: application/json" -d '{"staff_id":1, "role_id":1, "name":"update Bob"}' http://localhost:8080/staffs
+func (sc *staffController) UpdateStaff(ctx Context) error {
+	var putRequest requestStaff.Put
+
+	if err := ctx.Bind(&putRequest); err != nil {
+		return err
+	}
+
+	u, err := sc.staffUsecase.Update(putRequest.StaffId, putRequest.RoleId, putRequest.Name)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, u)
 }

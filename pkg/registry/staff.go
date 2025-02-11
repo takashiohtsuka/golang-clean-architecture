@@ -10,6 +10,8 @@ func (r *registry) NewStaffController() controller.Staff {
 	s := usecase.NewStaffUsecase(
 		repository.NewStaffRepository(r.db),
 		repository.NewDBRepository(r.db),
+		repository.NewRoleRepository(r.db),
+		repository.NewStaffRoleRepository(r.db),
 	)
 
 	return controller.NewStaffController(s)

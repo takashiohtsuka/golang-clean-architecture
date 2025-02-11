@@ -19,5 +19,9 @@ func NewRouter(e *echo.Echo, c controller.AppController) *echo.Echo {
 
 	e.POST("/staffs", func(context echo.Context) error { return c.Staff.CreateStaff(context) })
 
+	e.PUT("/staffs", func(context echo.Context) error { return c.Staff.UpdateStaff(context) })
+
+	e.POST("/roles", func(context echo.Context) error { return c.Role.CreateRole(context) })
+
 	return e
 }

@@ -26,5 +26,6 @@ func (r *registry) NewAppController() controller.AppController {
 	return controller.AppController{
 		User:  r.NewUserController(),
 		Staff: r.NewStaffController(),
+		Role:  r.NewRoleController(),
 	}
 }
