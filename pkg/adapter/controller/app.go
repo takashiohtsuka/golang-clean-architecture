@@ -1,7 +1,10 @@
 package controller
 
 type AppController struct {
-	User  interface{ User }
-	Staff interface{ Staff }
-	Role  interface{ Role }
+	User                    interface{ User }
+	Staff                   interface{ Staff }
+	Role                    interface{ Role }
+	FanIn                   interface{ FanIn }
+	URLDownloadSequential   interface{ URLDownloadSequential }
+	URLDownloadConcurrent   interface{ URLDownloadConcurrent }
 }

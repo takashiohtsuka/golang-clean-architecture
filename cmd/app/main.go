@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 
 	"golang-clean-architecture/pkg/config"
 	"golang-clean-architecture/pkg/infrastructure/datastore"
@@ -17,8 +16,11 @@ func main() {
 	config.ReadConfig()
 
 	db := datastore.NewDB()
-	db.LogMode(true)
-	defer db.Close()
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer sqlDB.Close()
 
 	r := registry.NewRegistry(db)
 

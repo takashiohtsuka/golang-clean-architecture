@@ -1,14 +1,19 @@
 package controller
 
 import (
-	"golang-clean-architecture/pkg/usecase/usecase"
 	"net/http"
 
 	"golang-clean-architecture/pkg/domain/model"
 )
 
+// 使う側（controller）がusecaseに必要なインターフェースを定義
+type UserUsecase interface {
+	List(u []*model.User) ([]*model.User, error)
+	Create(u *model.User) (*model.User, error)
+}
+
 type userController struct {
-	userUsecase usecase.User
+	userUsecase UserUsecase
 }
 
 type User interface {
@@ -16,7 +21,7 @@ type User interface {
 	CreateUser(c Context) error
 }
 
-func NewUserController(us usecase.User) User {
+func NewUserController(us UserUsecase) User {
 	return &userController{us}
 }
 

@@ -3,7 +3,7 @@ package registry
 import (
 	"golang-clean-architecture/pkg/adapter/controller"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type registry struct {
@@ -24,8 +24,11 @@ func NewRegistry(db *gorm.DB) Registry {
 */
 func (r *registry) NewAppController() controller.AppController {
 	return controller.AppController{
-		User:  r.NewUserController(),
-		Staff: r.NewStaffController(),
-		Role:  r.NewRoleController(),
+		User:                  r.NewUserController(),
+		Staff:                 r.NewStaffController(),
+		Role:                  r.NewRoleController(),
+		FanIn:                 r.NewFanInController(),
+		URLDownloadSequential: r.NewURLDownloadSequentialController(),
+		URLDownloadConcurrent: r.NewURLDownloadConcurrentController(),
 	}
 }

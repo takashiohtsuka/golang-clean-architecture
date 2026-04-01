@@ -1,4 +1,4 @@
-package repository
+package outputport
 
 import "golang-clean-architecture/pkg/domain/entity"
 

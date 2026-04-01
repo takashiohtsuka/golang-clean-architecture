@@ -3,7 +3,7 @@ package registry
 import (
 	"golang-clean-architecture/pkg/adapter/controller"
 	"golang-clean-architecture/pkg/adapter/repository"
-	"golang-clean-architecture/pkg/usecase/usecase"
+	"golang-clean-architecture/pkg/usecase/interactor"
 )
 
 /*
@@ -11,7 +11,7 @@ import (
 UserControllerでDIするUsecaseとRepositryをコンストラクタインジェクションでDI
 */
 func (r *registry) NewUserController() controller.User {
-	u := usecase.NewUserUsecase(
+	u := interactor.NewUserUsecase(
 		repository.NewUserRepository(r.db),
 		repository.NewDBRepository(r.db),
 	)

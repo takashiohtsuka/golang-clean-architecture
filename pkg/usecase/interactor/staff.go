@@ -1,35 +1,29 @@
-package usecase
+package interactor
 
 import (
 	"errors"
 	"golang-clean-architecture/pkg/domain/entity"
 	"golang-clean-architecture/pkg/domain/model"
-	"golang-clean-architecture/pkg/usecase/repository"
+	"golang-clean-architecture/pkg/usecase/outputport"
 )
 
-type staffUsecase struct {
-	staffRepository     repository.StaffRepository
-	dBRepository        repository.DBRepository
-	roleRepository      repository.RoleRepository
-	staffRoleRepository repository.StaffRoleRepository
-}
-
-type Staff interface {
-	List(u []*model.Staff) ([]*entity.Staff, error)
-	Create(u *entity.Staff) (*entity.Staff, error)
-	Update(staffId uint, roleId uint, updateStaffName string) (*entity.Staff, error)
+type StaffUsecase struct {
+	staffRepository     outputport.StaffRepository
+	dBRepository        outputport.DBRepository
+	roleRepository      outputport.RoleRepository
+	staffRoleRepository outputport.StaffRoleRepository
 }
 
 // コンストラクタ
 func NewStaffUsecase(
-	s repository.StaffRepository,
-	d repository.DBRepository,
-	r repository.RoleRepository,
-	sr repository.StaffRoleRepository) Staff {
-	return &staffUsecase{s, d, r, sr}
+	s outputport.StaffRepository,
+	d outputport.DBRepository,
+	r outputport.RoleRepository,
+	sr outputport.StaffRoleRepository) *StaffUsecase {
+	return &StaffUsecase{s, d, r, sr}
 }
 
-func (uu *staffUsecase) List(modelStaff []*model.Staff) ([]*entity.Staff, error) {
+func (uu *StaffUsecase) List(modelStaff []*model.Staff) ([]*entity.Staff, error) {
 	entityStaffs, err := uu.staffRepository.FindAll(modelStaff)
 	if err != nil {
 		return nil, err
@@ -38,7 +32,7 @@ func (uu *staffUsecase) List(modelStaff []*model.Staff) ([]*entity.Staff, error)
 	return entityStaffs, nil
 }
 
-func (uu *staffUsecase) Create(u *entity.Staff) (*entity.Staff, error) {
+func (uu *StaffUsecase) Create(u *entity.Staff) (*entity.Staff, error) {
 	data, err := uu.dBRepository.Transaction(func(i interface{}) (interface{}, error) {
 		s, err := uu.staffRepository.Create(u)
 
@@ -61,7 +55,7 @@ func (uu *staffUsecase) Create(u *entity.Staff) (*entity.Staff, error) {
 }
 
 /**　staff のupdate時のみstaff_roleの紐付けができる という業務を想定 **/
-func (uu *staffUsecase) Update(staffId uint, roleId uint, updateStaffName string) (*entity.Staff, error) {
+func (uu *StaffUsecase) Update(staffId uint, roleId uint, updateStaffName string) (*entity.Staff, error) {
 
 	staffConditions := make(map[string]interface{})
 	staffConditions["ID"] = staffId

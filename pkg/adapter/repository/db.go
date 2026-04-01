@@ -1,17 +1,17 @@
 package repository
 
 import (
-	"golang-clean-architecture/pkg/usecase/repository"
+	"golang-clean-architecture/pkg/usecase/outputport"
 	"log"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type dbRepository struct {
 	db *gorm.DB
 }
 
-func NewDBRepository(db *gorm.DB) repository.DBRepository {
+func NewDBRepository(db *gorm.DB) outputport.DBRepository {
 	return &dbRepository{db}
 }
 
@@ -29,7 +29,6 @@ func (r *dbRepository) Transaction(txFunc func(interface{}) (interface{}, error)
 		} else if err != nil {
 			log.Print("rollback")
 			tx.Rollback()
-			panic("error")
 		} else {
 			err = tx.Commit().Error
 		}

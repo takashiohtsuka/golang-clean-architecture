@@ -3,8 +3,8 @@ package router
 import (
 	"golang-clean-architecture/pkg/adapter/controller"
 
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 /** ルーティング */
@@ -22,6 +22,14 @@ func NewRouter(e *echo.Echo, c controller.AppController) *echo.Echo {
 	e.PUT("/staffs", func(context echo.Context) error { return c.Staff.UpdateStaff(context) })
 
 	e.POST("/roles", func(context echo.Context) error { return c.Role.CreateRole(context) })
+
+	e.GET("/fanin", func(context echo.Context) error { return c.FanIn.GetFanIn(context) })
+	e.GET("/urlDownloadSequential", func(context echo.Context) error {
+		return c.URLDownloadSequential.GetURLDownloadSequential(context)
+	})
+	e.GET("/urlDownloadConcurrent", func(context echo.Context) error {
+		return c.URLDownloadConcurrent.GetURLDownloadConcurrent(context)
+	})
 
 	return e
 }

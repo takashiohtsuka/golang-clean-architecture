@@ -3,7 +3,7 @@
 CREATE TABLE users (
    id INT NOT NULL AUTO_INCREMENT,
    name varchar(255) DEFAULT NULL COMMENT 'user name',
-   age varchar(255) DEFAULT NULL COMMENT 'age',
+   age int DEFAULT NULL COMMENT 'age',
    created_at datetime DEFAULT NULL COMMENT 'created at',
    updated_at datetime DEFAULT NULL COMMENT 'updated at',
    deleted_at timestamp NULL DEFAULT NULL COMMENT 'deleted at',

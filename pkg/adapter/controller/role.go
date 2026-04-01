@@ -2,19 +2,23 @@ package controller
 
 import (
 	"golang-clean-architecture/pkg/domain/entity"
-	"golang-clean-architecture/pkg/usecase/usecase"
 	"net/http"
 )
 
+// 使う側（controller）がusecaseに必要なインターフェースを定義
+type RoleUsecase interface {
+	Create(u *entity.Role) (*entity.Role, error)
+}
+
 type roleController struct {
-	roleUsecase usecase.Role
+	roleUsecase RoleUsecase
 }
 
 type Role interface {
 	CreateRole(c Context) error
 }
 
-func NewRoleController(r usecase.Role) Role {
+func NewRoleController(r RoleUsecase) Role {
 	return &roleController{r}
 }
 

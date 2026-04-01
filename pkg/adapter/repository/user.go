@@ -2,9 +2,9 @@ package repository
 
 import (
 	"golang-clean-architecture/pkg/domain/model"
-	"golang-clean-architecture/pkg/usecase/repository"
+	"golang-clean-architecture/pkg/usecase/outputport"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 /*
@@ -15,8 +15,12 @@ type userRepository struct {
 }
 
 // コンストラクタ
-func NewUserRepository(db *gorm.DB) repository.UserRepository {
+func NewUserRepository(db *gorm.DB) outputport.UserRepository {
 	return &userRepository{db}
+}
+
+func (ur *userRepository) WithTx(tx interface{}) outputport.UserRepository {
+	return &userRepository{db: tx.(*gorm.DB)}
 }
 
 func (ur *userRepository) FindAll(u []*model.User) ([]*model.User, error) {

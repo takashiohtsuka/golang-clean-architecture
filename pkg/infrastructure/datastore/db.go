@@ -5,8 +5,10 @@ import (
 
 	"golang-clean-architecture/pkg/config"
 
-	"github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
+	mysqlcfg "github.com/go-sql-driver/mysql"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 /*
@@ -14,8 +16,7 @@ import (
 mysqlの設定とgormの設定
 */
 func NewDB() *gorm.DB {
-	DBMS := "mysql"
-	mySqlConfig := &mysql.Config{
+	mySqlConfig := &mysqlcfg.Config{
 		User:                 config.C.Database.User,
 		Passwd:               config.C.Database.Password,
 		Net:                  config.C.Database.Net,
@@ -27,7 +28,9 @@ func NewDB() *gorm.DB {
 		},
 	}
 
-	db, err := gorm.Open(DBMS, mySqlConfig.FormatDSN())
+	db, err := gorm.Open(mysql.Open(mySqlConfig.FormatDSN()), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
 
 	if err != nil {
 		log.Fatalln(err)

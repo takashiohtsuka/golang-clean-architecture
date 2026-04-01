@@ -1,18 +1,18 @@
 package repository
 
 import (
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	mapper "golang-clean-architecture/pkg/adapter/mapper/role"
 	"golang-clean-architecture/pkg/domain/entity"
 	"golang-clean-architecture/pkg/domain/model"
-	"golang-clean-architecture/pkg/usecase/repository"
+	"golang-clean-architecture/pkg/usecase/outputport"
 )
 
 type roleRepository struct {
 	db *gorm.DB
 }
 
-func NewRoleRepository(db *gorm.DB) repository.RoleRepository {
+func NewRoleRepository(db *gorm.DB) outputport.RoleRepository {
 	return &roleRepository{db}
 }
 

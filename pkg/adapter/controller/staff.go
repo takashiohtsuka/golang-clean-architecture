@@ -4,12 +4,18 @@ import (
 	requestStaff "golang-clean-architecture/pkg/adapter/request/staffs"
 	"golang-clean-architecture/pkg/domain/entity"
 	"golang-clean-architecture/pkg/domain/model"
-	"golang-clean-architecture/pkg/usecase/usecase"
 	"net/http"
 )
 
+// 使う側（controller）がusecaseに必要なインターフェースを定義
+type StaffUsecase interface {
+	List(u []*model.Staff) ([]*entity.Staff, error)
+	Create(u *entity.Staff) (*entity.Staff, error)
+	Update(staffId uint, roleId uint, updateStaffName string) (*entity.Staff, error)
+}
+
 type staffController struct {
-	staffUsecase usecase.Staff
+	staffUsecase StaffUsecase
 }
 
 type Staff interface {
@@ -18,7 +24,7 @@ type Staff interface {
 	UpdateStaff(c Context) error
 }
 
-func NewStaffController(st usecase.Staff) Staff {
+func NewStaffController(st StaffUsecase) Staff {
 	return &staffController{st}
 }
 

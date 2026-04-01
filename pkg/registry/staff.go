@@ -3,11 +3,11 @@ package registry
 import (
 	"golang-clean-architecture/pkg/adapter/controller"
 	"golang-clean-architecture/pkg/adapter/repository"
-	"golang-clean-architecture/pkg/usecase/usecase"
+	"golang-clean-architecture/pkg/usecase/interactor"
 )
 
 func (r *registry) NewStaffController() controller.Staff {
-	s := usecase.NewStaffUsecase(
+	s := interactor.NewStaffUsecase(
 		repository.NewStaffRepository(r.db),
 		repository.NewDBRepository(r.db),
 		repository.NewRoleRepository(r.db),

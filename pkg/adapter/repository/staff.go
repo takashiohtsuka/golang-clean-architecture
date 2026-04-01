@@ -1,26 +1,34 @@
 package repository
 
 import (
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"golang-clean-architecture/pkg/adapter/mapper/staff"
 	"golang-clean-architecture/pkg/domain/entity"
 	"golang-clean-architecture/pkg/domain/model"
-	"golang-clean-architecture/pkg/usecase/repository"
+	"golang-clean-architecture/pkg/usecase/outputport"
 )
 
 type staffRepository struct {
-	db *gorm.DB
+	db         *gorm.DB
+	conditions map[string]interface{}
 }
 
-func NewStaffRepository(db *gorm.DB) repository.StaffRepository {
-	return &staffRepository{db}
+func NewStaffRepository(db *gorm.DB) outputport.StaffRepository {
+	return &staffRepository{db: db, conditions: map[string]interface{}{}}
+}
+
+// イミュータブルパターン: 元のインスタンスを変えず、conditionsを追加したコピーを返す
+func (ur staffRepository) Where(column string, value interface{}) outputport.StaffRepository {
+	ur.conditions[column] = value
+	return &ur
 }
 
 func (ur *staffRepository) FindAll(ormStaffs []*model.Staff) ([]*entity.Staff, error) {
-	//構造体のポインタ配列の引数だが、配列の要素を指定しないと検索条件として機能していない
-	//whereメソッドを実装してまたは条件追記も可能
-	//err := ur.db.Where(model.Staff{Name: "ddd"}).Find(&u).Error
-	err := ur.db.Find(&ormStaffs).Error
+	query := ur.db
+	for col, val := range ur.conditions {
+		query = query.Where(col+" = ?", val)
+	}
+	err := query.Find(&ormStaffs).Error
 
 	if err != nil {
 		return nil, err
@@ -47,7 +55,7 @@ func (ur *staffRepository) Create(s *entity.Staff) (*entity.Staff, error) {
 
 func (ur *staffRepository) Update(s *entity.Staff) (*entity.Staff, error) {
 	ormStaff, _ := mapper.ToOrmModel(s)
-	if err := ur.db.Model(&ormStaff).Update(ormStaff).Error; err != nil {
+	if err := ur.db.Model(&ormStaff).Updates(ormStaff).Error; err != nil {
 		return nil, err
 	}
 

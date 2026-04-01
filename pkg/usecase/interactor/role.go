@@ -1,26 +1,22 @@
-package usecase
+package interactor
 
 import (
 	"errors"
 	"golang-clean-architecture/pkg/domain/entity"
-	"golang-clean-architecture/pkg/usecase/repository"
+	"golang-clean-architecture/pkg/usecase/outputport"
 )
 
-type roleUsecase struct {
-	roleRepository repository.RoleRepository
-	dBRepository   repository.DBRepository
-}
-
-type Role interface {
-	Create(u *entity.Role) (*entity.Role, error)
+type RoleUsecase struct {
+	roleRepository outputport.RoleRepository
+	dBRepository   outputport.DBRepository
 }
 
 // コンストラクタ
-func NewRoleUsecase(r repository.RoleRepository, d repository.DBRepository) Role {
-	return &roleUsecase{r, d}
+func NewRoleUsecase(r outputport.RoleRepository, d outputport.DBRepository) *RoleUsecase {
+	return &RoleUsecase{r, d}
 }
 
-func (uu *roleUsecase) Create(u *entity.Role) (*entity.Role, error) {
+func (uu *RoleUsecase) Create(u *entity.Role) (*entity.Role, error) {
 	data, err := uu.dBRepository.Transaction(func(i interface{}) (interface{}, error) {
 		s, err := uu.roleRepository.Create(u)
 
