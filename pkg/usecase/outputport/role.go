@@ -1,10 +1,13 @@
 package outputport
 
-import "golang-clean-architecture/pkg/domain/entity"
+import (
+	"golang-clean-architecture/pkg/domain/collection"
+	"golang-clean-architecture/pkg/domain/entity"
+	"golang-clean-architecture/pkg/usecase/query"
+)
 
 type RoleRepository interface {
-	//変数名 引数 戻り値の型
-	//スライス(可変調配列)で構造体のentityが引数
+	FindAll(conditions []query.Condition) (collection.Collection[entity.RoleEntity], error)
+	FindOne(conditions []query.Condition) (entity.RoleEntity, error)
 	Create(u *entity.Role) (*entity.Role, error)
-	FindOne(map[string]interface{}) (*entity.Role, error)
 }

@@ -2,20 +2,12 @@ package controller
 
 import (
 	requestStaff "golang-clean-architecture/pkg/adapter/request/staffs"
-	"golang-clean-architecture/pkg/domain/entity"
-	"golang-clean-architecture/pkg/domain/model"
+	"golang-clean-architecture/pkg/usecase/inputport"
 	"net/http"
 )
 
-// 使う側（controller）がusecaseに必要なインターフェースを定義
-type StaffUsecase interface {
-	List(u []*model.Staff) ([]*entity.Staff, error)
-	Create(u *entity.Staff) (*entity.Staff, error)
-	Update(staffId uint, roleId uint, updateStaffName string) (*entity.Staff, error)
-}
-
 type staffController struct {
-	staffUsecase StaffUsecase
+	staffUsecase inputport.StaffUsecase
 }
 
 type Staff interface {
@@ -24,18 +16,22 @@ type Staff interface {
 	UpdateStaff(c Context) error
 }
 
-func NewStaffController(st StaffUsecase) Staff {
+func NewStaffController(st inputport.StaffUsecase) Staff {
 	return &staffController{st}
 }
 
 func (sc *staffController) GetStaffs(ctx Context) error {
-	var s []*model.Staff
+	var req requestStaff.Get
+	if err := ctx.Bind(&req); err != nil {
+		return err
+	}
 
-	//構造体のポインタ変数配列に構造体を追加
-	//sts := &model.Staff{ID: 1}
-	//s = append(s, sts)
+	input, err := req.ToInput()
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, err.Error())
+	}
 
-	entityStaffs, err := sc.staffUsecase.List(s)
+	entityStaffs, err := sc.staffUsecase.List(input)
 	if err != nil {
 		return err
 	}
@@ -45,32 +41,32 @@ func (sc *staffController) GetStaffs(ctx Context) error {
 
 // curl -X POST -H "Content-Type: application/json" -d '{"name":"James10", "age":"30", "is_active":"false", "created_at": "2024-12-22T12:00:00Z", "updated_at": "2024-12-22T12:00:00Z"}' http://localhost:8080/staffs
 func (sc *staffController) CreateStaff(ctx Context) error {
-	var params entity.Staff
+	var req requestStaff.Post
 
-	if err := ctx.Bind(&params); err != nil {
+	if err := ctx.Bind(&req); err != nil {
 		return err
 	}
 
-	u, err := sc.staffUsecase.Create(&params)
+	createdStaff, err := sc.staffUsecase.Create(ctx.Request().Context(), req.ToInput())
 	if err != nil {
 		return err
 	}
 
-	return ctx.JSON(http.StatusCreated, u)
+	return ctx.JSON(http.StatusCreated, createdStaff)
 }
 
-// curl -X PUT -H "Content-Type: application/json" -d '{"staff_id":1, "role_id":1, "name":"update Bob"}' http://localhost:8080/staffs
+// curl -X PUT -H "Content-Type: application/json" -d '{"staff_id":1, "role_ids":[1,2], "name":"update Bob", "age":"30", "is_active":"true"}' http://localhost:8080/staffs
 func (sc *staffController) UpdateStaff(ctx Context) error {
-	var putRequest requestStaff.Put
+	var req requestStaff.Put
 
-	if err := ctx.Bind(&putRequest); err != nil {
+	if err := ctx.Bind(&req); err != nil {
 		return err
 	}
 
-	u, err := sc.staffUsecase.Update(putRequest.StaffId, putRequest.RoleId, putRequest.Name)
+	ok, err := sc.staffUsecase.Update(ctx.Request().Context(), req.ToInput())
 	if err != nil {
 		return err
 	}
 
-	return ctx.JSON(http.StatusOK, u)
+	return ctx.JSON(http.StatusOK, ok)
 }

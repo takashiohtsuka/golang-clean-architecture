@@ -1,48 +1,58 @@
 package interactor
 
 import (
-	"errors"
-	"golang-clean-architecture/pkg/domain/model"
+	"context"
+	"strconv"
+
+	"golang-clean-architecture/pkg/domain/collection"
+	"golang-clean-architecture/pkg/domain/entity"
+	"golang-clean-architecture/pkg/usecase/input"
 	"golang-clean-architecture/pkg/usecase/outputport"
+	"golang-clean-architecture/pkg/usecase/query"
 )
 
 type UserUsecase struct {
 	userRepository outputport.UserRepository
-	dBRepository   outputport.DBRepository
+	uow            outputport.UnitOfWork
 }
 
 // コンストラクタ
-func NewUserUsecase(r outputport.UserRepository, d outputport.DBRepository) *UserUsecase {
-	return &UserUsecase{r, d}
+func NewUserUsecase(userRepository outputport.UserRepository, uow outputport.UnitOfWork) *UserUsecase {
+	return &UserUsecase{userRepository, uow}
 }
 
-func (uu *UserUsecase) List(u []*model.User) ([]*model.User, error) {
-	u, err := uu.userRepository.FindAll(u)
-	if err != nil {
-		return nil, err
+func (uu *UserUsecase) List(input input.ListUserInput) (collection.Collection[entity.UserEntity], error) {
+	conditions := []query.Condition{}
+
+	if input.Name != "" {
+		conditions = append(conditions, query.Where("name", input.Name))
+	}
+	if input.Age != nil {
+		conditions = append(conditions, query.Where("age", *input.Age))
 	}
 
-	return u, nil
+	return uu.userRepository.FindAll(conditions)
 }
 
-func (uu *UserUsecase) Create(u *model.User) (*model.User, error) {
-	data, err := uu.dBRepository.Transaction(func(i interface{}) (interface{}, error) {
-		u, err := uu.userRepository.WithTx(i).Create(u)
+func (uu *UserUsecase) Create(ctx context.Context, input input.CreateUserInput) (*entity.User, error) {
+	user := &entity.User{
+		Name: input.Name,
+		Age:  strconv.Itoa(input.Age),
+	}
+
+	var createdUser *entity.User
+	err := uu.uow.Do(ctx, func() error {
+		var e error
+		createdUser, e = uu.userRepository.Create(user)
 
 		// do mailing
 		// do logging
 		// do another process
-		return u, err
+		return e
 	})
-	user, ok := data.(*model.User)
-
-	if !ok {
-		return nil, errors.New("cast error")
-	}
-
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return createdUser, nil
 }

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"golang-clean-architecture/pkg/domain/entity"
-	"golang-clean-architecture/pkg/domain/model"
+	"golang-clean-architecture/pkg/infrastructure/model"
 
 	"gorm.io/gorm"
 )

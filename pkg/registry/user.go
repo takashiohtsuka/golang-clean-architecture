@@ -13,7 +13,7 @@ UserControllerでDIするUsecaseとRepositryをコンストラクタインジェ
 func (r *registry) NewUserController() controller.User {
 	u := interactor.NewUserUsecase(
 		repository.NewUserRepository(r.db),
-		repository.NewDBRepository(r.db),
+		repository.NewUnitOfWork(r.db),
 	)
 
 	return controller.NewUserController(u)

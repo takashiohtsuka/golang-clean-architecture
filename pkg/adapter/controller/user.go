@@ -3,17 +3,12 @@ package controller
 import (
 	"net/http"
 
-	"golang-clean-architecture/pkg/domain/model"
+	requestUser "golang-clean-architecture/pkg/adapter/request/users"
+	"golang-clean-architecture/pkg/usecase/inputport"
 )
 
-// 使う側（controller）がusecaseに必要なインターフェースを定義
-type UserUsecase interface {
-	List(u []*model.User) ([]*model.User, error)
-	Create(u *model.User) (*model.User, error)
-}
-
 type userController struct {
-	userUsecase UserUsecase
+	userUsecase inputport.UserUsecase
 }
 
 type User interface {
@@ -21,32 +16,40 @@ type User interface {
 	CreateUser(c Context) error
 }
 
-func NewUserController(us UserUsecase) User {
+func NewUserController(us inputport.UserUsecase) User {
 	return &userController{us}
 }
 
 func (uc *userController) GetUsers(ctx Context) error {
-	var u []*model.User
+	var req requestUser.Get
+	if err := ctx.Bind(&req); err != nil {
+		return err
+	}
 
-	u, err := uc.userUsecase.List(u)
+	input, err := req.ToInput()
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	users, err := uc.userUsecase.List(input)
 	if err != nil {
 		return err
 	}
 
-	return ctx.JSON(http.StatusOK, u)
+	return ctx.JSON(http.StatusOK, users)
 }
 
 func (uc *userController) CreateUser(ctx Context) error {
-	var params model.User
+	var req requestUser.Post
 
-	if err := ctx.Bind(&params); err != nil {
+	if err := ctx.Bind(&req); err != nil {
 		return err
 	}
 
-	u, err := uc.userUsecase.Create(&params)
+	createdUser, err := uc.userUsecase.Create(ctx.Request().Context(), req.ToInput())
 	if err != nil {
 		return err
 	}
 
-	return ctx.JSON(http.StatusCreated, u)
+	return ctx.JSON(http.StatusCreated, createdUser)
 }

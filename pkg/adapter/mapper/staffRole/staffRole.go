@@ -2,7 +2,7 @@ package staffRole
 
 import (
 	"golang-clean-architecture/pkg/domain/entity"
-	"golang-clean-architecture/pkg/domain/model"
+	"golang-clean-architecture/pkg/infrastructure/model"
 )
 
 func ToEntity(ormStaffRole *model.StaffRole) (*entity.StaffRole, error) {

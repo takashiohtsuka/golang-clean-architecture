@@ -10,3 +10,7 @@ type Role struct {
 	UpdatedAt *time.Time `json:"updated_at"`
 	DeletedAt *time.Time `json:"deleted_at"`
 }
+
+func (r *Role) IsNil() bool    { return r.ID == 0 }
+func (r *Role) GetID() uint     { return r.ID }
+func (r *Role) GetName() string { return r.Name }

@@ -2,7 +2,7 @@ package main
 
 import (
 	"golang-clean-architecture/pkg/config"
-	"golang-clean-architecture/pkg/domain/model"
+	"golang-clean-architecture/pkg/infrastructure/model"
 	"golang-clean-architecture/pkg/infrastructure/datastore"
 	"log"
 )

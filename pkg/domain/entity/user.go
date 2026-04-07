@@ -2,7 +2,7 @@ package entity
 
 import "time"
 
-/* staff entityの構造体 */
+/* user entityの構造体 */
 type User struct {
 	ID        uint       `json:"id"`
 	Name      string     `json:"name"`
@@ -11,3 +11,8 @@ type User struct {
 	UpdatedAt *time.Time `json:"updated_at"`
 	DeletedAt *time.Time `json:"deleted_at"`
 }
+
+func (u *User) IsNil() bool    { return u.ID == 0 }
+func (u *User) GetID() uint     { return u.ID }
+func (u *User) GetName() string { return u.Name }
+func (u *User) GetAge() string  { return u.Age }

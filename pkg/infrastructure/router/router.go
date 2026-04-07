@@ -21,6 +21,7 @@ func NewRouter(e *echo.Echo, c controller.AppController) *echo.Echo {
 
 	e.PUT("/staffs", func(context echo.Context) error { return c.Staff.UpdateStaff(context) })
 
+	e.GET("/roles", func(context echo.Context) error { return c.Role.GetRoles(context) })
 	e.POST("/roles", func(context echo.Context) error { return c.Role.CreateRole(context) })
 
 	e.GET("/fanin", func(context echo.Context) error { return c.FanIn.GetFanIn(context) })

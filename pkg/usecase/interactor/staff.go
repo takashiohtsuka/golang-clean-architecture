@@ -1,135 +1,122 @@
 package interactor
 
 import (
+	"context"
 	"errors"
+
+	"golang-clean-architecture/pkg/domain/collection"
 	"golang-clean-architecture/pkg/domain/entity"
-	"golang-clean-architecture/pkg/domain/model"
+	"golang-clean-architecture/pkg/usecase/input"
 	"golang-clean-architecture/pkg/usecase/outputport"
+	"golang-clean-architecture/pkg/usecase/query"
 )
 
 type StaffUsecase struct {
-	staffRepository     outputport.StaffRepository
-	dBRepository        outputport.DBRepository
-	roleRepository      outputport.RoleRepository
-	staffRoleRepository outputport.StaffRoleRepository
+	staffRepository outputport.StaffRepository
+	uow             outputport.UnitOfWork
+	roleRepository  outputport.RoleRepository
 }
 
 // コンストラクタ
 func NewStaffUsecase(
-	s outputport.StaffRepository,
-	d outputport.DBRepository,
-	r outputport.RoleRepository,
-	sr outputport.StaffRoleRepository) *StaffUsecase {
-	return &StaffUsecase{s, d, r, sr}
+	staffRepository outputport.StaffRepository,
+	uow outputport.UnitOfWork,
+	roleRepository outputport.RoleRepository) *StaffUsecase {
+	return &StaffUsecase{staffRepository, uow, roleRepository}
 }
 
-func (uu *StaffUsecase) List(modelStaff []*model.Staff) ([]*entity.Staff, error) {
-	entityStaffs, err := uu.staffRepository.FindAll(modelStaff)
-	if err != nil {
-		return nil, err
+func (su *StaffUsecase) List(input input.ListStaffInput) (collection.Collection[entity.StaffEntity], error) {
+	conditions := []query.Condition{}
+
+	if input.Name != "" {
+		conditions = append(conditions, query.Where("name", input.Name))
+	}
+	if input.Age != "" {
+		conditions = append(conditions, query.Where("age", input.Age))
+	}
+	if input.IsActive != nil {
+		conditions = append(conditions, query.Where("is_active", *input.IsActive))
 	}
 
-	return entityStaffs, nil
+	return su.staffRepository.FindAll(conditions)
 }
 
-func (uu *StaffUsecase) Create(u *entity.Staff) (*entity.Staff, error) {
-	data, err := uu.dBRepository.Transaction(func(i interface{}) (interface{}, error) {
-		s, err := uu.staffRepository.Create(u)
+func (su *StaffUsecase) Create(ctx context.Context, input input.CreateStaffInput) (*entity.Staff, error) {
+	staff := &entity.Staff{
+		Name:     input.Name,
+		Age:      input.Age,
+		IsActive: input.IsActive,
+	}
+
+	var createdStaff *entity.Staff
+	err := su.uow.Do(ctx, func() error {
+		var e error
+		createdStaff, e = su.staffRepository.Create(staff)
 
 		// do mailing
 		// do logging
 		// do another process
-		return s, err
+		return e
 	})
-	staff, ok := data.(*entity.Staff)
-
-	if !ok {
-		return nil, errors.New("cast error")
-	}
-
 	if err != nil {
 		return nil, err
 	}
 
-	return staff, nil
+	return createdStaff, nil
 }
 
 /**　staff のupdate時のみstaff_roleの紐付けができる という業務を想定 **/
-func (uu *StaffUsecase) Update(staffId uint, roleId uint, updateStaffName string) (*entity.Staff, error) {
+func (su *StaffUsecase) Update(ctx context.Context, input input.UpdateStaffInput) (bool, error) {
 
-	staffConditions := make(map[string]interface{})
-	staffConditions["ID"] = staffId
-
-	entityStaff, err := uu.staffRepository.FindOne(staffConditions)
+	staffEntity, err := su.staffRepository.FindOne([]query.Condition{
+		query.Where("ID", input.StaffId),
+	})
 
 	if err != nil {
-		//staffのrecord not foundのerrが返る
-		return nil, err
+		return false, err
 	}
 
-	//roleの存在チェック
-	//存在しないroleだったら何かしらのエラーレスポンス
-	roleConditions := make(map[string]interface{})
-	roleConditions["ID"] = roleId
-	_, err2 := uu.roleRepository.FindOne(roleConditions)
-
-	if err2 != nil {
-		//roleのrecord not foundのerrが返る
-		return nil, err2
+	if staffEntity.IsNil() {
+		return false, errors.New("staff not found")
 	}
 
-	//TODO 次のタスク
-	//TODO コード上で日付インスタンスをセットする処理の仕方を検討する
-	//TODO CleanArchitectureでNullEntityの在り方を検討する
+	entityStaff, ok := staffEntity.(*entity.Staff)
+	if !ok {
+		return false, errors.New("cast error")
+	}
 
-	staffRoleConditions := make(map[string]interface{})
-	staffRoleConditions["staff_id"] = entityStaff.ID
+	// 指定されたroleIdが全て存在するか確認（IN句で一括取得）
+	roleCollection, err := su.roleRepository.FindAll([]query.Condition{
+		query.WhereIn("ID", input.RoleIds),
+	})
+	if err != nil {
+		return false, err
+	}
+	if roleCollection.TotalCount() != len(input.RoleIds) {
+		return false, errors.New("role not found")
+	}
 
-	//upSert対象のstaffRoleEntity
-	entityStaffRole, _ := uu.staffRoleRepository.FindOne(staffRoleConditions)
-
-	var isUpdate = false
-
-	if entityStaffRole == nil {
-		entityStaffRole = &entity.StaffRole{
-			StaffId: entityStaff.ID,
-			RoleId:  roleId,
+	err = su.uow.Do(ctx, func() error {
+		entityStaff.Name = input.Name
+		entityStaff.Age = input.Age
+		entityStaff.IsActive = input.IsActive
+		if _, err := su.staffRepository.Update(entityStaff); err != nil {
+			return err
 		}
 
-	} else {
-		isUpdate = true
-		entityStaffRole.StaffId = entityStaff.ID
-		entityStaffRole.RoleId = roleId
-	}
-
-	staff, err3 := uu.dBRepository.Transaction(func(i interface{}) (interface{}, error) {
-
-		//TODO ここのerrのハンドリングの仕方は問題ないのか調べる
-		entityStaff.Name = updateStaffName
-		s, err4 := uu.staffRepository.Update(entityStaff)
-
-		if isUpdate {
-			_, err4 = uu.staffRoleRepository.Update(entityStaffRole)
-
-		} else {
-			_, err4 = uu.staffRoleRepository.Create(entityStaffRole)
+		// staff_rolesを全削除して再insert
+		if err := su.staffRepository.ReplaceRoles(entityStaff.ID, input.RoleIds); err != nil {
+			return err
 		}
 
 		// do mailing
 		// do logging
 		// do another process
-		return s, err4
+		return nil
 	})
-	//TODO callbackみたいな記述の仕方なので、要確認
-	updatedStaff, ok := staff.(*entity.Staff)
-
-	if !ok {
-		return nil, errors.New("cast error")
+	if err != nil {
+		return false, err
 	}
 
-	if err3 != nil {
-		return nil, err3
-	}
-
-	return updatedStaff, nil
+	return true, nil
 }

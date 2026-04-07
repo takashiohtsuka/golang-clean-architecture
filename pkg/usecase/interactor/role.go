@@ -1,36 +1,39 @@
 package interactor
 
 import (
-	"errors"
+	"context"
+
+	"golang-clean-architecture/pkg/domain/collection"
 	"golang-clean-architecture/pkg/domain/entity"
 	"golang-clean-architecture/pkg/usecase/outputport"
+	"golang-clean-architecture/pkg/usecase/query"
 )
 
 type RoleUsecase struct {
 	roleRepository outputport.RoleRepository
-	dBRepository   outputport.DBRepository
+	uow            outputport.UnitOfWork
 }
 
 // コンストラクタ
-func NewRoleUsecase(r outputport.RoleRepository, d outputport.DBRepository) *RoleUsecase {
-	return &RoleUsecase{r, d}
+func NewRoleUsecase(r outputport.RoleRepository, uow outputport.UnitOfWork) *RoleUsecase {
+	return &RoleUsecase{r, uow}
 }
 
-func (uu *RoleUsecase) Create(u *entity.Role) (*entity.Role, error) {
-	data, err := uu.dBRepository.Transaction(func(i interface{}) (interface{}, error) {
-		s, err := uu.roleRepository.Create(u)
+func (uu *RoleUsecase) List() (collection.Collection[entity.RoleEntity], error) {
+	return uu.roleRepository.FindAll([]query.Condition{})
+}
+
+func (uu *RoleUsecase) Create(ctx context.Context, u *entity.Role) (*entity.Role, error) {
+	var role *entity.Role
+	err := uu.uow.Do(ctx, func() error {
+		var e error
+		role, e = uu.roleRepository.Create(u)
 
 		// do mailing
 		// do logging
 		// do another process
-		return s, err
+		return e
 	})
-	role, ok := data.(*entity.Role)
-
-	if !ok {
-		return nil, errors.New("cast error")
-	}
-
 	if err != nil {
 		return nil, err
 	}

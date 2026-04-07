@@ -1,12 +1,15 @@
 package outputport
 
-import "golang-clean-architecture/pkg/domain/model"
-import "golang-clean-architecture/pkg/domain/entity"
+import (
+	"golang-clean-architecture/pkg/domain/collection"
+	"golang-clean-architecture/pkg/domain/entity"
+	"golang-clean-architecture/pkg/usecase/query"
+)
 
 type StaffRepository interface {
-	Where(column string, value interface{}) StaffRepository
-	FindAll(s []*model.Staff) ([]*entity.Staff, error)
+	FindAll(conditions []query.Condition) (collection.Collection[entity.StaffEntity], error)
+	FindOne(conditions []query.Condition) (entity.StaffEntity, error)
 	Create(u *entity.Staff) (*entity.Staff, error)
 	Update(s *entity.Staff) (*entity.Staff, error)
-	FindOne(conditions map[string]interface{}) (*entity.Staff, error)
+	ReplaceRoles(staffId uint, roleIds []uint) error
 }

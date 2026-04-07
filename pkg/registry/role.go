@@ -9,7 +9,7 @@ import (
 func (r *registry) NewRoleController() controller.Role {
 	role := interactor.NewRoleUsecase(
 		repository.NewRoleRepository(r.db),
-		repository.NewDBRepository(r.db),
+		repository.NewUnitOfWork(r.db),
 	)
 
 	return controller.NewRoleController(role)
