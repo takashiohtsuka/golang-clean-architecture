@@ -11,8 +11,7 @@ import (
 type WomanRepository interface {
 	FindAll(conditions []query.Condition) (collection.Collection[entity.WomanEntity], error)
 	FindOne(conditions []query.Condition) (entity.WomanEntity, error)
-	Create(ctx context.Context, w *entity.Woman) error
-	Update(w *entity.Woman) error
-	AssignToStore(womanID uint, storeID uint) error
-	RemoveStoreAssignment(womanID uint, storeID uint) error
+	Create(ctx context.Context, w *entity.Woman) (uint, error)
+	Update(ctx context.Context, w *entity.Woman) error
+	SaveImage(ctx context.Context, womanID uint, path string) error
 }

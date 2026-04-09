@@ -15,8 +15,7 @@ type Woman struct {
 	BloodType        *string                                  `json:"blood_type"`
 	Hobby            *string                                  `json:"hobby"`
 	IsActive         bool                                        `json:"is_active"`
-	StoreAssignments collection.Collection[WomanStoreAssignment] `json:"store_assignments"`
-	Images           collection.Collection[WomanImage]           `json:"images"`
+	Images collection.Collection[WomanImage] `json:"images"`
 	CreatedAt        *time.Time                                  `json:"created_at"`
 	UpdatedAt        *time.Time                               `json:"updated_at"`
 	DeletedAt        *time.Time                               `json:"deleted_at"`
@@ -30,6 +29,5 @@ func (w *Woman) GetAge() *int                                                   
 func (w *Woman) GetBirthplace() *string                                         { return w.Birthplace }
 func (w *Woman) GetBloodType() *string                                          { return w.BloodType }
 func (w *Woman) GetHobby() *string                                              { return w.Hobby }
-func (w *Woman) GetIsActive() bool                                                { return w.IsActive }
-func (w *Woman) GetStoreAssignments() collection.Collection[WomanStoreAssignment] { return w.StoreAssignments }
-func (w *Woman) GetImages() collection.Collection[WomanImage]                     { return w.Images }
+func (w *Woman) GetIsActive() bool                            { return w.IsActive }
+func (w *Woman) GetImages() collection.Collection[WomanImage] { return w.Images }

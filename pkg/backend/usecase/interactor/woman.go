@@ -8,7 +8,7 @@ import (
 	"golang-clean-architecture/pkg/backend/usecase/input"
 	"golang-clean-architecture/pkg/backend/usecase/inputport"
 	backendoutputport "golang-clean-architecture/pkg/backend/usecase/outputport"
-	"golang-clean-architecture/pkg/domain/collection"
+	appconfig "golang-clean-architecture/pkg/config"
 	"golang-clean-architecture/pkg/usecase/outputport"
 	"golang-clean-architecture/pkg/usecase/query"
 )
@@ -18,6 +18,7 @@ type WomanUsecase struct {
 	companyRepository backendoutputport.CompanyRepository
 	storeRepository   backendoutputport.StoreRepository
 	uow               outputport.UnitOfWork
+	storage           backendoutputport.StorageRepository
 }
 
 func NewWomanUsecase(
@@ -25,8 +26,9 @@ func NewWomanUsecase(
 	companyRepository backendoutputport.CompanyRepository,
 	storeRepository backendoutputport.StoreRepository,
 	uow outputport.UnitOfWork,
+	storage backendoutputport.StorageRepository,
 ) inputport.WomanUsecase {
-	return &WomanUsecase{womanRepository, companyRepository, storeRepository, uow}
+	return &WomanUsecase{womanRepository, companyRepository, storeRepository, uow, storage}
 }
 
 func (u *WomanUsecase) Create(ctx context.Context, i input.CreateWomanInput) error {
@@ -40,7 +42,6 @@ func (u *WomanUsecase) Create(ctx context.Context, i input.CreateWomanInput) err
 		return errors.New("company not found")
 	}
 
-	assignments := make([]entity.WomanStoreAssignment, 0, len(i.StoreIDs))
 	hasBTypeStore := false
 	for _, storeID := range i.StoreIDs {
 		store, err := u.storeRepository.FindOne(ctx, []query.Condition{
@@ -56,24 +57,76 @@ func (u *WomanUsecase) Create(ctx context.Context, i input.CreateWomanInput) err
 		if store.GetBusinessType().GetCode() == "B" {
 			hasBTypeStore = true
 		}
-		assignments = append(assignments, entity.WomanStoreAssignment{StoreID: storeID})
 	}
 	if hasBTypeStore && len(i.StoreIDs) > 1 {
 		return errors.New("業種Bの店舗に所属する場合、他の店舗と同時に所属することはできません")
 	}
 
 	woman := &entity.Woman{
-		CompanyID:        i.CompanyID,
-		Name:             i.Name,
-		Age:              i.Age,
-		Birthplace:       i.Birthplace,
-		BloodType:        i.BloodType,
-		Hobby:            i.Hobby,
-		IsActive:         i.IsActive,
-		StoreAssignments: collection.NewCollection(assignments),
+		CompanyID:  i.CompanyID,
+		Name:       i.Name,
+		Age:        i.Age,
+		Birthplace: i.Birthplace,
+		BloodType:  i.BloodType,
+		Hobby:      i.Hobby,
+		IsActive:   i.IsActive,
 	}
 
 	return u.uow.Do(ctx, func() error {
-		return u.womanRepository.Create(ctx, woman)
+		womanID, err := u.womanRepository.Create(ctx, woman)
+		if err != nil {
+			return err
+		}
+		for _, storeID := range i.StoreIDs {
+			if err := u.storeRepository.AddWoman(womanID, storeID); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func (u *WomanUsecase) Update(ctx context.Context, i input.UpdateWomanInput) error {
+	woman, err := u.womanRepository.FindOne([]query.Condition{
+		query.Where("id", i.ID),
+	})
+	if err != nil {
+		return err
+	}
+	if woman.IsNil() {
+		return errors.New("woman not found")
+	}
+
+	return u.uow.Do(ctx, func() error {
+		updated := &entity.Woman{
+			ID:         i.ID,
+			CompanyID:  woman.GetCompanyID(),
+			Name:       i.Name,
+			Age:        i.Age,
+			Birthplace: i.Birthplace,
+			BloodType:  i.BloodType,
+			Hobby:      i.Hobby,
+			IsActive:   i.IsActive,
+		}
+		if err := u.womanRepository.Update(ctx, updated); err != nil {
+			return err
+		}
+
+		if i.ImageFile == nil {
+			return nil
+		}
+
+		path, err := u.storage.Upload(
+			ctx,
+			appconfig.C.Storage.Buckets.WomanImage,
+			i.ImageKey,
+			i.ImageFile,
+			i.ContentType,
+		)
+		if err != nil {
+			return err
+		}
+
+		return u.womanRepository.SaveImage(ctx, i.ID, path)
 	})
 }

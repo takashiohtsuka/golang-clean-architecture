@@ -13,6 +13,7 @@ func (r *registry) NewWomanController() controller.Woman {
 		backendrepository.NewCompanyRepository(r.db),
 		backendrepository.NewStoreRepository(r.db),
 		repository.NewUnitOfWork(r.db),
+		r.storage,
 	)
 	return controller.NewWomanController(u)
 }

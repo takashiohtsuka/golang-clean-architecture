@@ -13,4 +13,6 @@ type StoreRepository interface {
 	FindOne(ctx context.Context, conditions []query.Condition) (entity.StoreEntity, error)
 	Create(s *entity.Store) error
 	Update(s *entity.Store) error
+	AddWoman(womanID uint, storeID uint) error
+	RemoveWoman(womanID uint, storeID uint) error
 }

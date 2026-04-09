@@ -7,4 +7,5 @@ type Context interface {
 	Bind(i any) error
 	Validate(i any) error
 	Request() *http.Request
+	Param(name string) string
 }

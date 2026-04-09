@@ -6,6 +6,7 @@ import (
 	"golang-clean-architecture/pkg/domain/collection"
 	"golang-clean-architecture/pkg/frontend/domain/entity"
 	"golang-clean-architecture/pkg/frontend/usecase/outputport"
+	"golang-clean-architecture/pkg/helper"
 	"golang-clean-architecture/pkg/usecase/query"
 
 	"gorm.io/gorm"
@@ -20,43 +21,6 @@ type womanRepository struct {
 func NewWomanRepository(db *gorm.DB) outputport.WomanRepository {
 	return &womanRepository{db: db}
 }
-
-// --- row structs ---
-
-type womanListRow struct {
-	WomanID           uint    `gorm:"column:woman_id"`
-	WomanName         string  `gorm:"column:woman_name"`
-	Age               *int    `gorm:"column:age"`
-	Birthplace        *string `gorm:"column:birthplace"`
-	BloodType         *string `gorm:"column:blood_type"`
-	Hobby             *string `gorm:"column:hobby"`
-	AssignmentID      *uint   `gorm:"column:assignment_id"`
-	AssignmentStoreID *uint   `gorm:"column:assignment_store_id"`
-	ImageID           *uint   `gorm:"column:image_id"`
-	ImagePath         *string `gorm:"column:image_path"`
-	BlogID            *uint   `gorm:"column:blog_id"`
-	BlogTitle         *string `gorm:"column:blog_title"`
-}
-
-type womanDetailRow struct {
-	WomanID           uint    `gorm:"column:woman_id"`
-	WomanName         string  `gorm:"column:woman_name"`
-	Age               *int    `gorm:"column:age"`
-	Birthplace        *string `gorm:"column:birthplace"`
-	BloodType         *string `gorm:"column:blood_type"`
-	Hobby             *string `gorm:"column:hobby"`
-	AssignmentID      *uint   `gorm:"column:assignment_id"`
-	AssignmentStoreID *uint   `gorm:"column:assignment_store_id"`
-	ImageID           *uint   `gorm:"column:image_id"`
-	ImagePath         *string `gorm:"column:image_path"`
-	BlogID            *uint   `gorm:"column:blog_id"`
-	BlogTitle         *string `gorm:"column:blog_title"`
-	BlogBody          *string `gorm:"column:blog_body"`
-	PhotoID           *uint   `gorm:"column:photo_id"`
-	PhotoURL          *string `gorm:"column:photo_url"`
-}
-
-// --- FindAll ---
 
 func (r *womanRepository) FindAll(ctx context.Context, conditions []query.Condition) (collection.Collection[entity.WomanEntity], error) {
 	where, args := buildWhereClause(conditions)
@@ -89,14 +53,14 @@ func (r *womanRepository) FindAll(ctx context.Context, conditions []query.Condit
 
 	allArgs := append([]any{womanBlogsLimit}, args...)
 
-	var rows []womanListRow
+	var rows []map[string]any
 	if err := r.db.WithContext(ctx).Raw(sql, allArgs...).Scan(&rows).Error; err != nil {
 		return collection.NewCollection[entity.WomanEntity](nil), err
 	}
 	return mapToWomanList(rows), nil
 }
 
-func mapToWomanList(rows []womanListRow) collection.Collection[entity.WomanEntity] {
+func mapToWomanList(rows []map[string]any) collection.Collection[entity.WomanEntity] {
 	womanOrder := make([]uint, 0)
 	womanMap := make(map[uint]*entity.Woman)
 	seenAssignments := make(map[uint]map[uint]bool)
@@ -104,52 +68,57 @@ func mapToWomanList(rows []womanListRow) collection.Collection[entity.WomanEntit
 	seenBlogs := make(map[uint]map[uint]bool)
 
 	for _, row := range rows {
-		if _, exists := womanMap[row.WomanID]; !exists {
-			womanOrder = append(womanOrder, row.WomanID)
-			womanMap[row.WomanID] = &entity.Woman{
-				ID:         row.WomanID,
-				Name:       row.WomanName,
-				Age:        row.Age,
-				Birthplace: row.Birthplace,
-				BloodType:  row.BloodType,
-				Hobby:      row.Hobby,
+		womanID := helper.ToUint(row["woman_id"])
+
+		if _, exists := womanMap[womanID]; !exists {
+			womanOrder = append(womanOrder, womanID)
+			womanMap[womanID] = &entity.Woman{
+				ID:         womanID,
+				Name:       func() string { s := helper.ToStringPtr(row["woman_name"]); if s != nil { return *s }; return "" }(),
+				Age:        helper.ToIntPtr(row["age"]),
+				Birthplace: helper.ToStringPtr(row["birthplace"]),
+				BloodType:  helper.ToStringPtr(row["blood_type"]),
+				Hobby:      helper.ToStringPtr(row["hobby"]),
 			}
-			seenAssignments[row.WomanID] = make(map[uint]bool)
-			seenImages[row.WomanID] = make(map[uint]bool)
-			seenBlogs[row.WomanID] = make(map[uint]bool)
+			seenAssignments[womanID] = make(map[uint]bool)
+			seenImages[womanID] = make(map[uint]bool)
+			seenBlogs[womanID] = make(map[uint]bool)
 		}
 
-		if row.AssignmentID != nil && !seenAssignments[row.WomanID][*row.AssignmentID] {
-			seenAssignments[row.WomanID][*row.AssignmentID] = true
-			current := womanMap[row.WomanID].StoreAssignments.All()
+		assignmentID := helper.ToUint(row["assignment_id"])
+		if assignmentID != 0 && !seenAssignments[womanID][assignmentID] {
+			seenAssignments[womanID][assignmentID] = true
+			current := womanMap[womanID].StoreAssignments.All()
 			current = append(current, entity.WomanStoreAssignment{
-				ID:      *row.AssignmentID,
-				StoreID: *row.AssignmentStoreID,
+				ID:      assignmentID,
+				StoreID: helper.ToUint(row["assignment_store_id"]),
 			})
-			womanMap[row.WomanID].StoreAssignments = collection.NewCollection(current)
+			womanMap[womanID].StoreAssignments = collection.NewCollection(current)
 		}
 
-		if row.ImageID != nil && !seenImages[row.WomanID][*row.ImageID] {
-			seenImages[row.WomanID][*row.ImageID] = true
-			current := womanMap[row.WomanID].Images.All()
+		imageID := helper.ToUint(row["image_id"])
+		if imageID != 0 && !seenImages[womanID][imageID] {
+			seenImages[womanID][imageID] = true
+			current := womanMap[womanID].Images.All()
 			current = append(current, entity.WomanImage{
-				ID:   *row.ImageID,
-				Path: *row.ImagePath,
+				ID:   imageID,
+				Path: func() string { s := helper.ToStringPtr(row["image_path"]); if s != nil { return *s }; return "" }(),
 			})
-			womanMap[row.WomanID].Images = collection.NewCollection(current)
+			womanMap[womanID].Images = collection.NewCollection(current)
 		}
 
-		if row.BlogID != nil && !seenBlogs[row.WomanID][*row.BlogID] {
-			seenBlogs[row.WomanID][*row.BlogID] = true
-			current := womanMap[row.WomanID].Blogs.All()
+		blogID := helper.ToUint(row["blog_id"])
+		if blogID != 0 && !seenBlogs[womanID][blogID] {
+			seenBlogs[womanID][blogID] = true
+			current := womanMap[womanID].Blogs.All()
 			current = append(current, &entity.Blog{
-				ID:          *row.BlogID,
-				WomanID:     row.WomanID,
-				Title:       *row.BlogTitle,
+				ID:          blogID,
+				WomanID:     womanID,
+				Title:       func() string { s := helper.ToStringPtr(row["blog_title"]); if s != nil { return *s }; return "" }(),
 				IsPublished: true,
 				Photos:      collection.NewCollection[entity.Photo](nil),
 			})
-			womanMap[row.WomanID].Blogs = collection.NewCollection(current)
+			womanMap[womanID].Blogs = collection.NewCollection(current)
 		}
 	}
 
@@ -159,8 +128,6 @@ func mapToWomanList(rows []womanListRow) collection.Collection[entity.WomanEntit
 	}
 	return collection.NewCollection(items)
 }
-
-// --- FindOne ---
 
 func (r *womanRepository) FindOne(conditions []query.Condition) (entity.WomanEntity, error) {
 	where, args := buildWhereClause(conditions)
@@ -190,7 +157,7 @@ func (r *womanRepository) FindOne(conditions []query.Condition) (entity.WomanEnt
 		WHERE w.deleted_at IS NULL AND w.is_active = TRUE` + where + `
 		ORDER BY w.id, wsa.id, wi.id, b.id, p.id`
 
-	var rows []womanDetailRow
+	var rows []map[string]any
 	if err := r.db.Raw(sql, args...).Scan(&rows).Error; err != nil {
 		return &entity.NilWoman{}, err
 	}
@@ -200,15 +167,17 @@ func (r *womanRepository) FindOne(conditions []query.Condition) (entity.WomanEnt
 	return mapToWomanOne(rows), nil
 }
 
-func mapToWomanOne(rows []womanDetailRow) entity.WomanEntity {
+func mapToWomanOne(rows []map[string]any) entity.WomanEntity {
 	base := rows[0]
+	womanID := helper.ToUint(base["woman_id"])
+
 	w := &entity.Woman{
-		ID:         base.WomanID,
-		Name:       base.WomanName,
-		Age:        base.Age,
-		Birthplace: base.Birthplace,
-		BloodType:  base.BloodType,
-		Hobby:      base.Hobby,
+		ID:         womanID,
+		Name:       func() string { s := helper.ToStringPtr(base["woman_name"]); if s != nil { return *s }; return "" }(),
+		Age:        helper.ToIntPtr(base["age"]),
+		Birthplace: helper.ToStringPtr(base["birthplace"]),
+		BloodType:  helper.ToStringPtr(base["blood_type"]),
+		Hobby:      helper.ToStringPtr(base["hobby"]),
 	}
 
 	seenAssignments := make(map[uint]bool)
@@ -217,50 +186,54 @@ func mapToWomanOne(rows []womanDetailRow) entity.WomanEntity {
 	seenPhotos := make(map[uint]map[uint]bool)
 
 	for _, row := range rows {
-		if row.AssignmentID != nil && !seenAssignments[*row.AssignmentID] {
-			seenAssignments[*row.AssignmentID] = true
+		assignmentID := helper.ToUint(row["assignment_id"])
+		if assignmentID != 0 && !seenAssignments[assignmentID] {
+			seenAssignments[assignmentID] = true
 			current := w.StoreAssignments.All()
 			current = append(current, entity.WomanStoreAssignment{
-				ID:      *row.AssignmentID,
-				StoreID: *row.AssignmentStoreID,
+				ID:      assignmentID,
+				StoreID: helper.ToUint(row["assignment_store_id"]),
 			})
 			w.StoreAssignments = collection.NewCollection(current)
 		}
 
-		if row.ImageID != nil && !seenImages[*row.ImageID] {
-			seenImages[*row.ImageID] = true
+		imageID := helper.ToUint(row["image_id"])
+		if imageID != 0 && !seenImages[imageID] {
+			seenImages[imageID] = true
 			current := w.Images.All()
 			current = append(current, entity.WomanImage{
-				ID:   *row.ImageID,
-				Path: *row.ImagePath,
+				ID:   imageID,
+				Path: func() string { s := helper.ToStringPtr(row["image_path"]); if s != nil { return *s }; return "" }(),
 			})
 			w.Images = collection.NewCollection(current)
 		}
 
-		if row.BlogID != nil && !seenBlogs[*row.BlogID] {
-			seenBlogs[*row.BlogID] = true
-			seenPhotos[*row.BlogID] = make(map[uint]bool)
+		blogID := helper.ToUint(row["blog_id"])
+		if blogID != 0 && !seenBlogs[blogID] {
+			seenBlogs[blogID] = true
+			seenPhotos[blogID] = make(map[uint]bool)
 			current := w.Blogs.All()
 			current = append(current, &entity.Blog{
-				ID:          *row.BlogID,
-				WomanID:     base.WomanID,
-				Title:       *row.BlogTitle,
-				Body:        row.BlogBody,
+				ID:          blogID,
+				WomanID:     womanID,
+				Title:       func() string { s := helper.ToStringPtr(row["blog_title"]); if s != nil { return *s }; return "" }(),
+				Body:        helper.ToStringPtr(row["blog_body"]),
 				IsPublished: true,
 				Photos:      collection.NewCollection[entity.Photo](nil),
 			})
 			w.Blogs = collection.NewCollection(current)
 		}
 
-		if row.PhotoID != nil && row.BlogID != nil && !seenPhotos[*row.BlogID][*row.PhotoID] {
-			seenPhotos[*row.BlogID][*row.PhotoID] = true
+		photoID := helper.ToUint(row["photo_id"])
+		if photoID != 0 && blogID != 0 && !seenPhotos[blogID][photoID] {
+			seenPhotos[blogID][photoID] = true
 			blogs := w.Blogs.All()
 			for i, b := range blogs {
-				if b.GetID() == *row.BlogID {
+				if b.GetID() == blogID {
 					photos := b.GetPhotos().All()
 					photos = append(photos, entity.Photo{
-						ID:  *row.PhotoID,
-						URL: *row.PhotoURL,
+						ID:  photoID,
+						URL: func() string { s := helper.ToStringPtr(row["photo_url"]); if s != nil { return *s }; return "" }(),
 					})
 					blogs[i].(*entity.Blog).Photos = collection.NewCollection(photos)
 					break

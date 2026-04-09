@@ -1,11 +1,10 @@
 package repository
 
 import (
-	"time"
-
 	"golang-clean-architecture/pkg/backend/domain/entity"
 	"golang-clean-architecture/pkg/backend/usecase/outputport"
 	"golang-clean-architecture/pkg/domain/collection"
+	"golang-clean-architecture/pkg/helper"
 	"golang-clean-architecture/pkg/usecase/query"
 
 	"gorm.io/gorm"
@@ -19,51 +18,34 @@ func NewBlogRepository(db *gorm.DB) outputport.BlogRepository {
 	return &blogRepository{db: db}
 }
 
-type blogRow struct {
-	ID          uint       `gorm:"column:id"`
-	WomanID     uint       `gorm:"column:woman_id"`
-	Title       string     `gorm:"column:title"`
-	Body        *string    `gorm:"column:body"`
-	IsPublished bool       `gorm:"column:is_published"`
-	CreatedAt   *time.Time `gorm:"column:created_at"`
-	UpdatedAt   *time.Time `gorm:"column:updated_at"`
-	DeletedAt   *time.Time `gorm:"column:deleted_at"`
-}
+const blogSelectSQL = `
+	SELECT id, woman_id, title, body, is_published, created_at, updated_at, deleted_at
+	FROM blogs WHERE deleted_at IS NULL`
 
-func (r *blogRow) toEntity() *entity.Blog {
+func toBlogEntity(row map[string]any) *entity.Blog {
 	return &entity.Blog{
-		ID:          r.ID,
-		WomanID:     r.WomanID,
-		Title:       r.Title,
-		Body:        r.Body,
-		IsPublished: r.IsPublished,
-		CreatedAt:   r.CreatedAt,
-		UpdatedAt:   r.UpdatedAt,
-		DeletedAt:   r.DeletedAt,
+		ID:          helper.ToUint(row["id"]),
+		WomanID:     helper.ToUint(row["woman_id"]),
+		Title:       func() string { s := helper.ToStringPtr(row["title"]); if s != nil { return *s }; return "" }(),
+		Body:        helper.ToStringPtr(row["body"]),
+		IsPublished: helper.ToBool(row["is_published"]),
+		CreatedAt:   helper.ToTimePtr(row["created_at"]),
+		UpdatedAt:   helper.ToTimePtr(row["updated_at"]),
+		DeletedAt:   helper.ToTimePtr(row["deleted_at"]),
 	}
-}
-
-type photoRow struct {
-	ID        uint       `gorm:"column:id"`
-	BlogID    uint       `gorm:"column:blog_id"`
-	URL       string     `gorm:"column:url"`
-	CreatedAt *time.Time `gorm:"column:created_at"`
-	UpdatedAt *time.Time `gorm:"column:updated_at"`
 }
 
 func (r *blogRepository) FindAll(conditions []query.Condition) (collection.Collection[entity.BlogEntity], error) {
 	where, args := buildWhereClause(conditions)
-	sql := `SELECT id, woman_id, title, body, is_published, created_at, updated_at, deleted_at
-	        FROM blogs WHERE deleted_at IS NULL` + where
 
-	var rows []blogRow
-	if err := r.db.Raw(sql, args...).Scan(&rows).Error; err != nil {
+	var rows []map[string]any
+	if err := r.db.Raw(blogSelectSQL+where, args...).Scan(&rows).Error; err != nil {
 		return collection.NewCollection[entity.BlogEntity](nil), err
 	}
 
 	items := make([]entity.BlogEntity, len(rows))
 	for i, row := range rows {
-		e := row.toEntity()
+		e := toBlogEntity(row)
 		e.Photos = collection.NewCollection[entity.Photo](nil)
 		items[i] = e
 	}
@@ -72,19 +54,17 @@ func (r *blogRepository) FindAll(conditions []query.Condition) (collection.Colle
 
 func (r *blogRepository) FindOne(conditions []query.Condition) (entity.BlogEntity, error) {
 	where, args := buildWhereClause(conditions)
-	sql := `SELECT id, woman_id, title, body, is_published, created_at, updated_at, deleted_at
-	        FROM blogs WHERE deleted_at IS NULL` + where + ` LIMIT 1`
 
-	var row blogRow
-	if err := r.db.Raw(sql, args...).Scan(&row).Error; err != nil {
+	var rows []map[string]any
+	if err := r.db.Raw(blogSelectSQL+where+` LIMIT 1`, args...).Scan(&rows).Error; err != nil {
 		return &entity.NilBlog{}, err
 	}
-	if row.ID == 0 {
+	if len(rows) == 0 {
 		return &entity.NilBlog{}, nil
 	}
 
-	e := row.toEntity()
-	photos, err := r.findPhotos(row.ID)
+	e := toBlogEntity(rows[0])
+	photos, err := r.findPhotos(e.ID)
 	if err != nil {
 		return &entity.NilBlog{}, err
 	}
@@ -108,7 +88,7 @@ func (r *blogRepository) Delete(id uint) error {
 }
 
 func (r *blogRepository) findPhotos(blogID uint) (collection.Collection[entity.Photo], error) {
-	var rows []photoRow
+	var rows []map[string]any
 	sql := `SELECT id, blog_id, url, created_at, updated_at FROM photos WHERE blog_id = ?`
 	if err := r.db.Raw(sql, blogID).Scan(&rows).Error; err != nil {
 		return collection.NewCollection[entity.Photo](nil), err
@@ -117,11 +97,11 @@ func (r *blogRepository) findPhotos(blogID uint) (collection.Collection[entity.P
 	items := make([]entity.Photo, len(rows))
 	for i, row := range rows {
 		items[i] = entity.Photo{
-			ID:        row.ID,
-			BlogID:    row.BlogID,
-			URL:       row.URL,
-			CreatedAt: row.CreatedAt,
-			UpdatedAt: row.UpdatedAt,
+			ID:        helper.ToUint(row["id"]),
+			BlogID:    helper.ToUint(row["blog_id"]),
+			URL:       func() string { s := helper.ToStringPtr(row["url"]); if s != nil { return *s }; return "" }(),
+			CreatedAt: helper.ToTimePtr(row["created_at"]),
+			UpdatedAt: helper.ToTimePtr(row["updated_at"]),
 		}
 	}
 	return collection.NewCollection(items), nil

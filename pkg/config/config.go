@@ -28,6 +28,16 @@ type config struct {
 	Server struct {
 		Address string
 	}
+	Storage struct {
+		Endpoint        string
+		AccessKeyID     string
+		SecretAccessKey string
+		UseSSL          bool
+		Buckets         struct {
+			WomanImage string
+			BlogImage  string
+		}
+	}
 }
 
 var C config
@@ -35,7 +45,12 @@ var C config
 func ReadConfig() {
 	Config := &C
 
-	viper.SetConfigName("config")
+	env := os.Getenv("APP_ENV")
+	if env == "" {
+		env = "local"
+	}
+
+	viper.SetConfigName("config." + env)
 	viper.SetConfigType("yml")
 	viper.AddConfigPath(filepath.Join(rootDir(), "config"))
 	viper.AutomaticEnv()

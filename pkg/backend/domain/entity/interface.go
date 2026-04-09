@@ -34,7 +34,7 @@ type WomanEntity interface {
 	GetBloodType() *string
 	GetHobby() *string
 	GetIsActive() bool
-	GetStoreAssignments() collection.Collection[WomanStoreAssignment]
+	GetImages() collection.Collection[WomanImage]
 }
 
 type BlogEntity interface {

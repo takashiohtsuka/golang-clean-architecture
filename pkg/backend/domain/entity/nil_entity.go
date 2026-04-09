@@ -34,9 +34,9 @@ func (n *NilWoman) GetAge() *int                                                
 func (n *NilWoman) GetBirthplace() *string                                          { return nil }
 func (n *NilWoman) GetBloodType() *string                                           { return nil }
 func (n *NilWoman) GetHobby() *string                                               { return nil }
-func (n *NilWoman) GetIsActive() bool                                               { return false }
-func (n *NilWoman) GetStoreAssignments() collection.Collection[WomanStoreAssignment] {
-	return collection.NewCollection[WomanStoreAssignment](nil)
+func (n *NilWoman) GetIsActive() bool                                    { return false }
+func (n *NilWoman) GetImages() collection.Collection[WomanImage] {
+	return collection.NewCollection[WomanImage](nil)
 }
 
 type NilBlog struct{}

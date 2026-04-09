@@ -1,0 +1,21 @@
+database:
+  user: root
+  password: root
+  net: tcp
+  addr: 127.0.0.1:3306
+  dbname: golang_clean_architecture
+  allowNativePasswords: true
+  params:
+    parseTime: "true"
+
+server:
+  address: 8080
+
+storage:
+  endpoint: https://s3.amazonaws.com
+  accessKeyID: your-access-key-id
+  secretAccessKey: your-secret-access-key
+  useSSL: true
+  buckets:
+    womanImage: woman-images
+    blogImage: blog-images

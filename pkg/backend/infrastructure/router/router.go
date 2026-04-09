@@ -13,6 +13,7 @@ func NewRouter(e *echo.Echo, c controller.AppController) *echo.Echo {
 	g.POST("/stores", func(ctx echo.Context) error { return c.Store.CreateStore(ctx) })
 	g.POST("/management_staffs", func(ctx echo.Context) error { return c.ManagementStaff.CreateManagementStaff(ctx) })
 	g.POST("/women", func(ctx echo.Context) error { return c.Woman.CreateWoman(ctx) })
+	g.PUT("/women/:id", func(ctx echo.Context) error { return c.Woman.UpdateWoman(ctx) })
 
 	return e
 }

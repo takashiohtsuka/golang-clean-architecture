@@ -5,6 +5,7 @@ import (
 	"golang-clean-architecture/pkg/frontend/domain/entity"
 	fvo "golang-clean-architecture/pkg/frontend/domain/valueobject"
 	"golang-clean-architecture/pkg/frontend/usecase/outputport"
+	"golang-clean-architecture/pkg/helper"
 	"golang-clean-architecture/pkg/usecase/query"
 
 	"gorm.io/gorm"
@@ -21,23 +22,6 @@ type storeRepository struct {
 
 func NewStoreRepository(db *gorm.DB) outputport.StoreRepository {
 	return &storeRepository{db: db}
-}
-
-type storeAggregateRow struct {
-	// store
-	StoreID          uint   `gorm:"column:store_id"`
-	BusinessTypeCode string `gorm:"column:business_type_code"`
-	StoreName        string `gorm:"column:store_name"`
-	// woman (nullable)
-	WomanID    *uint   `gorm:"column:woman_id"`
-	WomanName  *string `gorm:"column:woman_name"`
-	Age        *int    `gorm:"column:age"`
-	Birthplace *string `gorm:"column:birthplace"`
-	BloodType  *string `gorm:"column:blood_type"`
-	Hobby      *string `gorm:"column:hobby"`
-	// blog (nullable)
-	BlogID    *uint   `gorm:"column:blog_id"`
-	BlogTitle *string `gorm:"column:blog_title"`
 }
 
 func (r *storeRepository) FindAll(conditions []query.Condition) (collection.Collection[entity.StoreEntity], error) {
@@ -61,7 +45,7 @@ func (r *storeRepository) FindOne(conditions []query.Condition) (entity.StoreEnt
 	return all[0], nil
 }
 
-func (r *storeRepository) query(conditions []query.Condition) ([]storeAggregateRow, error) {
+func (r *storeRepository) query(conditions []query.Condition) ([]map[string]any, error) {
 	where, args := buildWhereClauseWithPrefix(conditions, "s")
 
 	sql := `
@@ -97,14 +81,14 @@ func (r *storeRepository) query(conditions []query.Condition) ([]storeAggregateR
 
 	allArgs := append([]any{storeWomenLimit, storeBlogsPerWomanLimit}, args...)
 
-	var rows []storeAggregateRow
+	var rows []map[string]any
 	if err := r.db.Raw(sql, allArgs...).Scan(&rows).Error; err != nil {
 		return nil, err
 	}
 	return rows, nil
 }
 
-func (r *storeRepository) mapToAggregate(rows []storeAggregateRow) collection.Collection[entity.StoreEntity] {
+func (r *storeRepository) mapToAggregate(rows []map[string]any) collection.Collection[entity.StoreEntity] {
 	storeOrder := make([]uint, 0)
 	storeMap := make(map[uint]*entity.Store)
 	womanOrderByStore := make(map[uint][]uint)
@@ -113,48 +97,51 @@ func (r *storeRepository) mapToAggregate(rows []storeAggregateRow) collection.Co
 	seenBlogs := make(map[uint]map[uint]bool)
 
 	for _, row := range rows {
-		if _, exists := storeMap[row.StoreID]; !exists {
-			storeOrder = append(storeOrder, row.StoreID)
-			storeMap[row.StoreID] = &entity.Store{
-				ID:           row.StoreID,
-				BusinessType: fvo.NewBusinessType(row.BusinessTypeCode),
-				Name:         row.StoreName,
+		storeID := helper.ToUint(row["store_id"])
+
+		if _, exists := storeMap[storeID]; !exists {
+			storeOrder = append(storeOrder, storeID)
+			storeMap[storeID] = &entity.Store{
+				ID:           storeID,
+				BusinessType: fvo.NewBusinessType(func() string { s := helper.ToStringPtr(row["business_type_code"]); if s != nil { return *s }; return "" }()),
+				Name:         func() string { s := helper.ToStringPtr(row["store_name"]); if s != nil { return *s }; return "" }(),
 			}
-			womanOrderByStore[row.StoreID] = make([]uint, 0)
+			womanOrderByStore[storeID] = make([]uint, 0)
 		}
 
-		if row.WomanID == nil {
+		womanID := helper.ToUint(row["woman_id"])
+		if womanID == 0 {
 			continue
 		}
-		womanID := *row.WomanID
 
-		if seenWomenByStore[row.StoreID] == nil {
-			seenWomenByStore[row.StoreID] = make(map[uint]bool)
+		if seenWomenByStore[storeID] == nil {
+			seenWomenByStore[storeID] = make(map[uint]bool)
 		}
-		if !seenWomenByStore[row.StoreID][womanID] {
-			seenWomenByStore[row.StoreID][womanID] = true
-			womanOrderByStore[row.StoreID] = append(womanOrderByStore[row.StoreID], womanID)
+		if !seenWomenByStore[storeID][womanID] {
+			seenWomenByStore[storeID][womanID] = true
+			womanOrderByStore[storeID] = append(womanOrderByStore[storeID], womanID)
 		}
 
 		if _, exists := womanMap[womanID]; !exists {
 			womanMap[womanID] = &entity.Woman{
 				ID:         womanID,
-				Name:       *row.WomanName,
-				Age:        row.Age,
-				Birthplace: row.Birthplace,
-				BloodType:  row.BloodType,
-				Hobby:      row.Hobby,
+				Name:       func() string { s := helper.ToStringPtr(row["woman_name"]); if s != nil { return *s }; return "" }(),
+				Age:        helper.ToIntPtr(row["age"]),
+				Birthplace: helper.ToStringPtr(row["birthplace"]),
+				BloodType:  helper.ToStringPtr(row["blood_type"]),
+				Hobby:      helper.ToStringPtr(row["hobby"]),
 			}
 			seenBlogs[womanID] = make(map[uint]bool)
 		}
 
-		if row.BlogID != nil && !seenBlogs[womanID][*row.BlogID] {
-			seenBlogs[womanID][*row.BlogID] = true
+		blogID := helper.ToUint(row["blog_id"])
+		if blogID != 0 && !seenBlogs[womanID][blogID] {
+			seenBlogs[womanID][blogID] = true
 			current := womanMap[womanID].Blogs.All()
 			current = append(current, &entity.Blog{
-				ID:          *row.BlogID,
+				ID:          blogID,
 				WomanID:     womanID,
-				Title:       *row.BlogTitle,
+				Title:       func() string { s := helper.ToStringPtr(row["blog_title"]); if s != nil { return *s }; return "" }(),
 				IsPublished: true,
 				Photos:      collection.NewCollection[entity.Photo](nil),
 			})

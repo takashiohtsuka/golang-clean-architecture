@@ -10,3 +10,12 @@ database:
 
 server:
   address: 8080
+
+storage:
+  endpoint: http://localhost:9000
+  accessKeyID: minioadmin
+  secretAccessKey: minioadmin
+  useSSL: false
+  buckets:
+    womanImage: woman-images
+    blogImage: blog-images

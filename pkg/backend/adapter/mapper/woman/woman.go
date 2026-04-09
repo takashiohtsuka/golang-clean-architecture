@@ -14,18 +14,18 @@ import (
 // StoreAssignments は含まれないため、リポジトリが別途ロード後にセットすること。
 func ToEntity(m *model.Woman) (*entity.Woman, error) {
 	return &entity.Woman{
-		ID:               m.ID,
-		CompanyID:        m.CompanyID,
-		Name:             m.Name,
-		Age:              m.Age,
-		Birthplace:       m.Birthplace,
-		BloodType:        m.BloodType,
-		Hobby:            m.Hobby,
-		IsActive:         m.IsActive,
-		StoreAssignments: collection.NewCollection([]entity.WomanStoreAssignment{}),
-		CreatedAt:        m.CreatedAt,
-		UpdatedAt:        m.UpdatedAt,
-		DeletedAt:        toTimePtr(m.DeletedAt),
+		ID:         m.ID,
+		CompanyID:  m.CompanyID,
+		Name:       m.Name,
+		Age:        m.Age,
+		Birthplace: m.Birthplace,
+		BloodType:  m.BloodType,
+		Hobby:      m.Hobby,
+		IsActive:   m.IsActive,
+		Images:     collection.NewCollection([]entity.WomanImage{}),
+		CreatedAt:  m.CreatedAt,
+		UpdatedAt:  m.UpdatedAt,
+		DeletedAt:  toTimePtr(m.DeletedAt),
 	}, nil
 }
 

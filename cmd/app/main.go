@@ -13,6 +13,7 @@ import (
 	frontendrouter "golang-clean-architecture/pkg/frontend/infrastructure/router"
 	"golang-clean-architecture/pkg/infrastructure/datastore"
 	"golang-clean-architecture/pkg/infrastructure/router"
+	"golang-clean-architecture/pkg/infrastructure/storage"
 	"golang-clean-architecture/pkg/infrastructure/validator"
 	"golang-clean-architecture/pkg/registry"
 )
@@ -27,8 +28,17 @@ func main() {
 	}
 	defer sqlDB.Close()
 
+	s3Client, err := storage.NewS3Client()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	if err := storage.CreateBuckets(s3Client); err != nil {
+		log.Fatalln(err)
+	}
+	storageRepo := storage.NewStorageRepository(s3Client)
+
 	r := registry.NewRegistry(db)
-	br := backendregistry.NewRegistry(db)
+	br := backendregistry.NewRegistry(db, storageRepo)
 	fr := frontendregistry.NewRegistry(db)
 
 	e := echo.New()
