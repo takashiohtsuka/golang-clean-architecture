@@ -78,7 +78,7 @@ func (u *WomanUsecase) Create(ctx context.Context, i input.CreateWomanInput) err
 			return err
 		}
 		for _, storeID := range i.StoreIDs {
-			if err := u.storeRepository.AddWoman(womanID, storeID); err != nil {
+			if err := u.storeRepository.AddWoman(ctx, womanID, storeID); err != nil {
 				return err
 			}
 		}
@@ -87,7 +87,7 @@ func (u *WomanUsecase) Create(ctx context.Context, i input.CreateWomanInput) err
 }
 
 func (u *WomanUsecase) Update(ctx context.Context, i input.UpdateWomanInput) error {
-	woman, err := u.womanRepository.FindOne([]query.Condition{
+	woman, err := u.womanRepository.FindOne(ctx, []query.Condition{
 		query.Where("id", i.ID),
 	})
 	if err != nil {

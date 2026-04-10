@@ -29,6 +29,6 @@ func (u *CompanyUsecase) Create(ctx context.Context, i input.CreateCompanyInput)
 		IsActive: i.IsActive,
 	}
 	return u.uow.Do(ctx, func() error {
-		return u.companyRepository.Create(company)
+		return u.companyRepository.Create(ctx, company)
 	})
 }

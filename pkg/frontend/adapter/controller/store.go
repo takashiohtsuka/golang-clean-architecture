@@ -14,20 +14,11 @@ type storeController struct {
 }
 
 type Store interface {
-	GetStoreList(c Context) error
 	GetStoreDetail(c Context) error
 }
 
 func NewStoreController(u inputport.StoreUsecase) Store {
 	return &storeController{u}
-}
-
-func (sc *storeController) GetStoreList(ctx Context) error {
-	stores, err := sc.storeUsecase.GetList(input.GetStoreListInput{})
-	if err != nil {
-		return err
-	}
-	return ctx.JSON(http.StatusOK, responseStores.NewListResponse(stores.All()))
 }
 
 func (sc *storeController) GetStoreDetail(ctx Context) error {
@@ -36,7 +27,7 @@ func (sc *storeController) GetStoreDetail(ctx Context) error {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
 	}
 
-	store, err := sc.storeUsecase.GetDetail(input.GetStoreDetailInput{
+	store, err := sc.storeUsecase.GetDetail(ctx.Request().Context(), input.GetStoreDetailInput{
 		StoreID: uint(id),
 	})
 	if err != nil {

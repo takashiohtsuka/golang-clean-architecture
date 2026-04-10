@@ -5,6 +5,7 @@ import (
 
 	"golang-clean-architecture/pkg/domain/collection"
 	"golang-clean-architecture/pkg/frontend/domain/entity"
+	womanMapper "golang-clean-architecture/pkg/frontend/adapter/mapper/woman"
 	"golang-clean-architecture/pkg/frontend/usecase/outputport"
 	"golang-clean-architecture/pkg/helper"
 	"golang-clean-architecture/pkg/usecase/query"
@@ -57,79 +58,10 @@ func (r *womanRepository) FindAll(ctx context.Context, conditions []query.Condit
 	if err := r.db.WithContext(ctx).Raw(sql, allArgs...).Scan(&rows).Error; err != nil {
 		return collection.NewCollection[entity.WomanEntity](nil), err
 	}
-	return mapToWomanList(rows), nil
+	return womanMapper.MapToAggregate(rows), nil
 }
 
-func mapToWomanList(rows []map[string]any) collection.Collection[entity.WomanEntity] {
-	womanOrder := make([]uint, 0)
-	womanMap := make(map[uint]*entity.Woman)
-	seenAssignments := make(map[uint]map[uint]bool)
-	seenImages := make(map[uint]map[uint]bool)
-	seenBlogs := make(map[uint]map[uint]bool)
-
-	for _, row := range rows {
-		womanID := helper.ToUint(row["woman_id"])
-
-		if _, exists := womanMap[womanID]; !exists {
-			womanOrder = append(womanOrder, womanID)
-			womanMap[womanID] = &entity.Woman{
-				ID:         womanID,
-				Name:       func() string { s := helper.ToStringPtr(row["woman_name"]); if s != nil { return *s }; return "" }(),
-				Age:        helper.ToIntPtr(row["age"]),
-				Birthplace: helper.ToStringPtr(row["birthplace"]),
-				BloodType:  helper.ToStringPtr(row["blood_type"]),
-				Hobby:      helper.ToStringPtr(row["hobby"]),
-			}
-			seenAssignments[womanID] = make(map[uint]bool)
-			seenImages[womanID] = make(map[uint]bool)
-			seenBlogs[womanID] = make(map[uint]bool)
-		}
-
-		assignmentID := helper.ToUint(row["assignment_id"])
-		if assignmentID != 0 && !seenAssignments[womanID][assignmentID] {
-			seenAssignments[womanID][assignmentID] = true
-			current := womanMap[womanID].StoreAssignments.All()
-			current = append(current, entity.WomanStoreAssignment{
-				ID:      assignmentID,
-				StoreID: helper.ToUint(row["assignment_store_id"]),
-			})
-			womanMap[womanID].StoreAssignments = collection.NewCollection(current)
-		}
-
-		imageID := helper.ToUint(row["image_id"])
-		if imageID != 0 && !seenImages[womanID][imageID] {
-			seenImages[womanID][imageID] = true
-			current := womanMap[womanID].Images.All()
-			current = append(current, entity.WomanImage{
-				ID:   imageID,
-				Path: func() string { s := helper.ToStringPtr(row["image_path"]); if s != nil { return *s }; return "" }(),
-			})
-			womanMap[womanID].Images = collection.NewCollection(current)
-		}
-
-		blogID := helper.ToUint(row["blog_id"])
-		if blogID != 0 && !seenBlogs[womanID][blogID] {
-			seenBlogs[womanID][blogID] = true
-			current := womanMap[womanID].Blogs.All()
-			current = append(current, &entity.Blog{
-				ID:          blogID,
-				WomanID:     womanID,
-				Title:       func() string { s := helper.ToStringPtr(row["blog_title"]); if s != nil { return *s }; return "" }(),
-				IsPublished: true,
-				Photos:      collection.NewCollection[entity.Photo](nil),
-			})
-			womanMap[womanID].Blogs = collection.NewCollection(current)
-		}
-	}
-
-	items := make([]entity.WomanEntity, 0, len(womanOrder))
-	for _, wid := range womanOrder {
-		items = append(items, womanMap[wid])
-	}
-	return collection.NewCollection(items)
-}
-
-func (r *womanRepository) FindOne(conditions []query.Condition) (entity.WomanEntity, error) {
+func (r *womanRepository) FindOne(ctx context.Context, conditions []query.Condition) (entity.WomanEntity, error) {
 	where, args := buildWhereClause(conditions)
 
 	sql := `
@@ -158,12 +90,13 @@ func (r *womanRepository) FindOne(conditions []query.Condition) (entity.WomanEnt
 		ORDER BY w.id, wsa.id, wi.id, b.id, p.id`
 
 	var rows []map[string]any
-	if err := r.db.Raw(sql, args...).Scan(&rows).Error; err != nil {
+	if err := r.db.WithContext(ctx).Raw(sql, args...).Scan(&rows).Error; err != nil {
 		return &entity.NilWoman{}, err
 	}
 	if len(rows) == 0 {
 		return &entity.NilWoman{}, nil
 	}
+
 	return mapToWomanOne(rows), nil
 }
 
@@ -173,7 +106,7 @@ func mapToWomanOne(rows []map[string]any) entity.WomanEntity {
 
 	w := &entity.Woman{
 		ID:         womanID,
-		Name:       func() string { s := helper.ToStringPtr(base["woman_name"]); if s != nil { return *s }; return "" }(),
+		Name:       helper.ToString(base["woman_name"]),
 		Age:        helper.ToIntPtr(base["age"]),
 		Birthplace: helper.ToStringPtr(base["birthplace"]),
 		BloodType:  helper.ToStringPtr(base["blood_type"]),
@@ -203,7 +136,7 @@ func mapToWomanOne(rows []map[string]any) entity.WomanEntity {
 			current := w.Images.All()
 			current = append(current, entity.WomanImage{
 				ID:   imageID,
-				Path: func() string { s := helper.ToStringPtr(row["image_path"]); if s != nil { return *s }; return "" }(),
+				Path: helper.ToString(row["image_path"]),
 			})
 			w.Images = collection.NewCollection(current)
 		}
@@ -216,7 +149,7 @@ func mapToWomanOne(rows []map[string]any) entity.WomanEntity {
 			current = append(current, &entity.Blog{
 				ID:          blogID,
 				WomanID:     womanID,
-				Title:       func() string { s := helper.ToStringPtr(row["blog_title"]); if s != nil { return *s }; return "" }(),
+				Title:       helper.ToString(row["blog_title"]),
 				Body:        helper.ToStringPtr(row["blog_body"]),
 				IsPublished: true,
 				Photos:      collection.NewCollection[entity.Photo](nil),
@@ -233,7 +166,7 @@ func mapToWomanOne(rows []map[string]any) entity.WomanEntity {
 					photos := b.GetPhotos().All()
 					photos = append(photos, entity.Photo{
 						ID:  photoID,
-						URL: func() string { s := helper.ToStringPtr(row["photo_url"]); if s != nil { return *s }; return "" }(),
+						URL: helper.ToString(row["photo_url"]),
 					})
 					blogs[i].(*entity.Blog).Photos = collection.NewCollection(photos)
 					break

@@ -13,11 +13,13 @@ func NewRouter(e *echo.Echo, c controller.AppController) *echo.Echo {
 		AllowMethods: []string{echo.GET},
 	}))
 
-	g.GET("/stores", func(ctx echo.Context) error { return c.Store.GetStoreList(ctx) })
 	g.GET("/stores/:id", func(ctx echo.Context) error { return c.Store.GetStoreDetail(ctx) })
+	g.GET("/stores/:id/women", func(ctx echo.Context) error { return c.Woman.GetStoreWomanList(ctx) })
 
 	g.GET("/women", func(ctx echo.Context) error { return c.Woman.GetWomanList(ctx) })
 	g.GET("/women/:id", func(ctx echo.Context) error { return c.Woman.GetWomanDetail(ctx) })
+
+	g.GET("/districts/:id/women", func(ctx echo.Context) error { return c.WomanDistrict.GetWomanDistrictList(ctx) })
 
 	return e
 }

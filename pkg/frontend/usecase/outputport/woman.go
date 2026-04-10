@@ -10,5 +10,5 @@ import (
 
 type WomanRepository interface {
 	FindAll(ctx context.Context, conditions []query.Condition) (collection.Collection[entity.WomanEntity], error)
-	FindOne(conditions []query.Condition) (entity.WomanEntity, error)
+	FindOne(ctx context.Context, conditions []query.Condition) (entity.WomanEntity, error)
 }

@@ -21,15 +21,17 @@ func NewWomanUsecase(womanRepository outputport.WomanRepository) inputport.Woman
 }
 
 func (u *womanUsecase) GetList(ctx context.Context, i input.GetWomanListInput) (collection.Collection[entity.WomanEntity], error) {
-	conditions := make([]query.Condition, 0)
-	if i.StoreID != nil {
-		conditions = append(conditions, query.Where("wsa.store_id", *i.StoreID))
-	}
-	return u.womanRepository.FindAll(ctx, conditions)
+	return u.womanRepository.FindAll(ctx, []query.Condition{})
 }
 
-func (u *womanUsecase) GetDetail(i input.GetWomanDetailInput) (entity.WomanEntity, error) {
-	woman, err := u.womanRepository.FindOne([]query.Condition{
+func (u *womanUsecase) GetStoreWomanList(ctx context.Context, i input.GetStoreWomanListInput) (collection.Collection[entity.WomanEntity], error) {
+	return u.womanRepository.FindAll(ctx, []query.Condition{
+		query.Where("wsa.store_id", i.StoreID),
+	})
+}
+
+func (u *womanUsecase) GetDetail(ctx context.Context, i input.GetWomanDetailInput) (entity.WomanEntity, error) {
+	woman, err := u.womanRepository.FindOne(ctx, []query.Condition{
 		query.Where("w.id", i.WomanID),
 	})
 	if err != nil {

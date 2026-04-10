@@ -12,7 +12,7 @@ import (
 
 // ToEntity はORM modelをentityに変換する。
 // StoreAssignments は含まれないため、リポジトリが別途ロード後にセットすること。
-func ToEntity(m *model.Woman) (*entity.Woman, error) {
+func ToEntity(m *model.Woman) *entity.Woman {
 	return &entity.Woman{
 		ID:         m.ID,
 		CompanyID:  m.CompanyID,
@@ -26,10 +26,10 @@ func ToEntity(m *model.Woman) (*entity.Woman, error) {
 		CreatedAt:  m.CreatedAt,
 		UpdatedAt:  m.UpdatedAt,
 		DeletedAt:  toTimePtr(m.DeletedAt),
-	}, nil
+	}
 }
 
-func ToOrmModel(e *entity.Woman) (*model.Woman, error) {
+func ToOrmModel(e *entity.Woman) *model.Woman {
 	return &model.Woman{
 		ID:         e.ID,
 		CompanyID:  e.CompanyID,
@@ -42,7 +42,7 @@ func ToOrmModel(e *entity.Woman) (*model.Woman, error) {
 		CreatedAt:  e.CreatedAt,
 		UpdatedAt:  e.UpdatedAt,
 		DeletedAt:  toDeletedAt(e.DeletedAt),
-	}, nil
+	}
 }
 
 func toTimePtr(d gorm.DeletedAt) *time.Time {

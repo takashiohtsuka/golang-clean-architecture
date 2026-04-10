@@ -33,7 +33,7 @@ func (m *mockWomanRepository) FindAll(_ context.Context, conditions []query.Cond
 	return m.findAllReturn, m.findAllError
 }
 
-func (m *mockWomanRepository) FindOne(conditions []query.Condition) (entity.WomanEntity, error) {
+func (m *mockWomanRepository) FindOne(_ context.Context, conditions []query.Condition) (entity.WomanEntity, error) {
 	m.findOneConditions = conditions
 	return m.findOneReturn, m.findOneError
 }
@@ -52,14 +52,14 @@ func TestWomanUsecase_GetList_WithNoStoreID_PassesEmptyConditions(t *testing.T) 
 	assert.Empty(t, mock.findAllConditions)
 }
 
-func TestWomanUsecase_GetList_WithStoreID_PassesStoreIDCondition(t *testing.T) {
+func TestWomanUsecase_GetStoreWomanList_PassesStoreIDCondition(t *testing.T) {
 	mock := &mockWomanRepository{
 		findAllReturn: collection.NewCollection[entity.WomanEntity](nil),
 	}
 	u := interactor.NewWomanUsecase(mock)
 
 	storeID := uint(1)
-	_, err := u.GetList(context.Background(), input.GetWomanListInput{StoreID: &storeID})
+	_, err := u.GetStoreWomanList(context.Background(), input.GetStoreWomanListInput{StoreID: storeID})
 
 	require.NoError(t, err)
 	require.Len(t, mock.findAllConditions, 1)
@@ -86,7 +86,7 @@ func TestWomanUsecase_GetDetail_PassesWomanIDCondition(t *testing.T) {
 	}
 	u := interactor.NewWomanUsecase(mock)
 
-	_, err := u.GetDetail(input.GetWomanDetailInput{WomanID: 42})
+	_, err := u.GetDetail(context.Background(), input.GetWomanDetailInput{WomanID: 42})
 
 	require.NoError(t, err)
 	require.Len(t, mock.findOneConditions, 1)
@@ -100,7 +100,7 @@ func TestWomanUsecase_GetDetail_WhenNotFound_ReturnsNotFoundException(t *testing
 	}
 	u := interactor.NewWomanUsecase(mock)
 
-	_, err := u.GetDetail(input.GetWomanDetailInput{WomanID: 99999})
+	_, err := u.GetDetail(context.Background(), input.GetWomanDetailInput{WomanID: 99999})
 
 	require.Error(t, err)
 	var nfe *apperror.NotFoundException
@@ -113,7 +113,7 @@ func TestWomanUsecase_GetDetail_WhenRepositoryFails_ReturnsError(t *testing.T) {
 	}
 	u := interactor.NewWomanUsecase(mock)
 
-	_, err := u.GetDetail(input.GetWomanDetailInput{WomanID: 1})
+	_, err := u.GetDetail(context.Background(), input.GetWomanDetailInput{WomanID: 1})
 
 	assert.Error(t, err)
 }

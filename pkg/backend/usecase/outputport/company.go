@@ -9,8 +9,8 @@ import (
 )
 
 type CompanyRepository interface {
-	FindAll(conditions []query.Condition) (collection.Collection[entity.CompanyEntity], error)
+	FindAll(ctx context.Context, conditions []query.Condition) (collection.Collection[entity.CompanyEntity], error)
 	FindOne(ctx context.Context, conditions []query.Condition) (entity.CompanyEntity, error)
-	Create(c *entity.Company) error
-	Update(c *entity.Company) error
+	Create(ctx context.Context, c *entity.Company) error
+	Update(ctx context.Context, c *entity.Company) error
 }

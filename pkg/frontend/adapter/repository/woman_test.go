@@ -203,7 +203,7 @@ func TestWomanRepository_FindOne_ReturnsWomanWithBlogsAndPhotos(t *testing.T) {
 	exec(t, db, "INSERT INTO photos (blog_id, url) VALUES (?, 'photos/photo1.jpg')", blog1ID)
 
 	repo := repository.NewWomanRepository(datastore.NewTestDB())
-	result, err := repo.FindOne([]query.Condition{query.Where("w.id", uint(womanID))})
+	result, err := repo.FindOne(context.Background(), []query.Condition{query.Where("w.id", uint(womanID))})
 
 	require.NoError(t, err)
 	require.False(t, result.IsNil())
@@ -219,7 +219,7 @@ func TestWomanRepository_FindOne_ReturnsWomanWithBlogsAndPhotos(t *testing.T) {
 
 func TestWomanRepository_FindOne_ReturnsNilWhenNotFound(t *testing.T) {
 	repo := repository.NewWomanRepository(datastore.NewTestDB())
-	result, err := repo.FindOne([]query.Condition{query.Where("w.id", uint(99999))})
+	result, err := repo.FindOne(context.Background(), []query.Condition{query.Where("w.id", uint(99999))})
 
 	require.NoError(t, err)
 	assert.True(t, result.IsNil())
@@ -320,7 +320,7 @@ func TestWomanRepository_FindOne_ReturnsErrorWhenDBFailed(t *testing.T) {
 	require.NoError(t, err)
 
 	repo := repository.NewWomanRepository(gormDB)
-	_, err = repo.FindOne([]query.Condition{query.Where("w.id", uint(1))})
+	_, err = repo.FindOne(context.Background(), []query.Condition{query.Where("w.id", uint(1))})
 
 	assert.Error(t, err)
 }
@@ -339,7 +339,7 @@ func TestWomanRepository_FindOne_MapsStoreAssignments(t *testing.T) {
 	exec(t, db, "INSERT INTO woman_store_assignments (woman_id, store_id) VALUES (?, ?)", womanID, store2ID)
 
 	repo := repository.NewWomanRepository(datastore.NewTestDB())
-	result, err := repo.FindOne([]query.Condition{query.Where("w.id", uint(womanID))})
+	result, err := repo.FindOne(context.Background(), []query.Condition{query.Where("w.id", uint(womanID))})
 
 	require.NoError(t, err)
 	require.False(t, result.IsNil())
@@ -359,7 +359,7 @@ func TestWomanRepository_FindOne_MapsMultipleImages(t *testing.T) {
 	exec(t, db, "INSERT INTO woman_images (woman_id, path) VALUES (?, 'images/photo3.jpg')", womanID)
 
 	repo := repository.NewWomanRepository(datastore.NewTestDB())
-	result, err := repo.FindOne([]query.Condition{query.Where("w.id", uint(womanID))})
+	result, err := repo.FindOne(context.Background(), []query.Condition{query.Where("w.id", uint(womanID))})
 
 	require.NoError(t, err)
 	require.False(t, result.IsNil())
@@ -376,7 +376,7 @@ func TestWomanRepository_FindOne_ReturnsNilForInactiveWoman(t *testing.T) {
 	womanID := exec(t, db, "INSERT INTO women (company_id, name, is_active) VALUES (?, '非アクティブ女性', false)", companyID)
 
 	repo := repository.NewWomanRepository(datastore.NewTestDB())
-	result, err := repo.FindOne([]query.Condition{query.Where("w.id", uint(womanID))})
+	result, err := repo.FindOne(context.Background(), []query.Condition{query.Where("w.id", uint(womanID))})
 
 	require.NoError(t, err)
 	assert.True(t, result.IsNil())

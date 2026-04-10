@@ -30,6 +30,16 @@ func ToUint(v any) uint {
 	return 0
 }
 
+func ToString(v any) string {
+	switch val := v.(type) {
+	case string:
+		return val
+	case []byte:
+		return string(val)
+	}
+	return ""
+}
+
 func ToStringPtr(v any) *string {
 	if v == nil {
 		return nil

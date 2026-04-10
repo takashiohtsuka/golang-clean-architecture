@@ -9,10 +9,10 @@ import (
 )
 
 type StoreRepository interface {
-	FindAll(conditions []query.Condition) (collection.Collection[entity.StoreEntity], error)
+	FindAll(ctx context.Context, conditions []query.Condition) (collection.Collection[entity.StoreEntity], error)
 	FindOne(ctx context.Context, conditions []query.Condition) (entity.StoreEntity, error)
-	Create(s *entity.Store) error
-	Update(s *entity.Store) error
-	AddWoman(womanID uint, storeID uint) error
-	RemoveWoman(womanID uint, storeID uint) error
+	Create(ctx context.Context, s *entity.Store) error
+	Update(ctx context.Context, s *entity.Store) error
+	AddWoman(ctx context.Context, womanID uint, storeID uint) error
+	RemoveWoman(ctx context.Context, womanID uint, storeID uint) error
 }

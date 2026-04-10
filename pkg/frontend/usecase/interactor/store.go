@@ -1,7 +1,8 @@
 package interactor
 
 import (
-	"golang-clean-architecture/pkg/domain/collection"
+	"context"
+
 	"golang-clean-architecture/pkg/frontend/domain/entity"
 	"golang-clean-architecture/pkg/frontend/usecase/input"
 	"golang-clean-architecture/pkg/frontend/usecase/inputport"
@@ -17,12 +18,8 @@ func NewStoreUsecase(storeRepository outputport.StoreRepository) inputport.Store
 	return &storeUsecase{storeRepository}
 }
 
-func (u *storeUsecase) GetList(i input.GetStoreListInput) (collection.Collection[entity.StoreEntity], error) {
-	return u.storeRepository.FindAll([]query.Condition{})
-}
-
-func (u *storeUsecase) GetDetail(i input.GetStoreDetailInput) (entity.StoreEntity, error) {
-	return u.storeRepository.FindOne([]query.Condition{
-		query.Where("s.id", i.StoreID),
+func (u *storeUsecase) GetDetail(ctx context.Context, i input.GetStoreDetailInput) (entity.StoreEntity, error) {
+	return u.storeRepository.FindOne(ctx, []query.Condition{
+		query.Where("id", i.StoreID),
 	})
 }

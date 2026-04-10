@@ -40,6 +40,7 @@ func (u *StoreUsecase) Create(ctx context.Context, i input.CreateStoreInput) err
 
 	store := &entity.Store{
 		CompanyID:    i.CompanyID,
+		DistrictID:   i.DistrictID,
 		BusinessType: bvo.NewBusinessType(i.BusinessTypeCode),
 		ContractPlan: bvo.NewContractPlan(i.ContractPlanCode),
 		Name:         i.Name,
@@ -48,6 +49,33 @@ func (u *StoreUsecase) Create(ctx context.Context, i input.CreateStoreInput) err
 	}
 
 	return u.uow.Do(ctx, func() error {
-		return u.storeRepository.Create(store)
+		return u.storeRepository.Create(ctx, store)
+	})
+}
+
+func (u *StoreUsecase) Update(ctx context.Context, i input.UpdateStoreInput) error {
+	store, err := u.storeRepository.FindOne(ctx, []query.Condition{
+		query.Where("id", i.ID),
+	})
+	if err != nil {
+		return err
+	}
+	if store.IsNil() {
+		return errors.New("store not found")
+	}
+
+	updated := &entity.Store{
+		ID:           i.ID,
+		CompanyID:    store.GetCompanyID(),
+		DistrictID:   i.DistrictID,
+		BusinessType: bvo.NewBusinessType(i.BusinessTypeCode),
+		ContractPlan: bvo.NewContractPlan(i.ContractPlanCode),
+		Name:         i.Name,
+		IsActive:     i.IsActive,
+		OpenStatus:   entity.OpenStatus(i.OpenStatus),
+	}
+
+	return u.uow.Do(ctx, func() error {
+		return u.storeRepository.Update(ctx, updated)
 	})
 }

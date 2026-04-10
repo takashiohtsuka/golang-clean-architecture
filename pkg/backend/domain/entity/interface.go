@@ -17,6 +17,7 @@ type StoreEntity interface {
 	IsNil() bool
 	GetID() uint
 	GetCompanyID() uint
+	GetDistrictID() uint
 	GetBusinessType() bvo.BusinessType
 	GetContractPlan() bvo.ContractPlan
 	GetName() string

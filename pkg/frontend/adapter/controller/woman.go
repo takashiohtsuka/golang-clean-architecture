@@ -17,6 +17,7 @@ type womanController struct {
 
 type Woman interface {
 	GetWomanList(c Context) error
+	GetStoreWomanList(c Context) error
 	GetWomanDetail(c Context) error
 }
 
@@ -25,22 +26,25 @@ func NewWomanController(u inputport.WomanUsecase) Woman {
 }
 
 func (wc *womanController) GetWomanList(ctx Context) error {
-	in := input.GetWomanListInput{}
-
-	if raw := ctx.QueryParam("store_id"); raw != "" {
-		id, err := strconv.ParseUint(raw, 10, 64)
-		if err != nil {
-			return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "invalid store_id"})
-		}
-		storeID := uint(id)
-		in.StoreID = &storeID
-	}
-
-	women, err := wc.womanUsecase.GetList(ctx.Request().Context(), in)
+	women, err := wc.womanUsecase.GetList(ctx.Request().Context(), input.GetWomanListInput{})
 	if err != nil {
 		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 	}
+	return ctx.JSON(http.StatusOK, responseWomen.NewListResponse(women.All()))
+}
 
+func (wc *womanController) GetStoreWomanList(ctx Context) error {
+	id, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
+	}
+
+	women, err := wc.womanUsecase.GetStoreWomanList(ctx.Request().Context(), input.GetStoreWomanListInput{
+		StoreID: uint(id),
+	})
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+	}
 	return ctx.JSON(http.StatusOK, responseWomen.NewListResponse(women.All()))
 }
 
@@ -50,7 +54,7 @@ func (wc *womanController) GetWomanDetail(ctx Context) error {
 		return ctx.JSON(http.StatusBadRequest, map[string]string{"error": "invalid id"})
 	}
 
-	woman, err := wc.womanUsecase.GetDetail(input.GetWomanDetailInput{
+	woman, err := wc.womanUsecase.GetDetail(ctx.Request().Context(), input.GetWomanDetailInput{
 		WomanID: uint(id),
 	})
 	if err != nil {

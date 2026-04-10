@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func ToEntity(m *model.Company) (*entity.Company, error) {
+func ToEntity(m *model.Company) *entity.Company {
 	return &entity.Company{
 		ID:        m.ID,
 		Name:      m.Name,
@@ -18,10 +18,10 @@ func ToEntity(m *model.Company) (*entity.Company, error) {
 		CreatedAt: m.CreatedAt,
 		UpdatedAt: m.UpdatedAt,
 		DeletedAt: toTimePtr(m.DeletedAt),
-	}, nil
+	}
 }
 
-func ToOrmModel(e *entity.Company) (*model.Company, error) {
+func ToOrmModel(e *entity.Company) *model.Company {
 	return &model.Company{
 		ID:        e.ID,
 		Name:      e.Name,
@@ -30,7 +30,7 @@ func ToOrmModel(e *entity.Company) (*model.Company, error) {
 		CreatedAt: e.CreatedAt,
 		UpdatedAt: e.UpdatedAt,
 		DeletedAt: toDeletedAt(e.DeletedAt),
-	}, nil
+	}
 }
 
 func toTimePtr(d gorm.DeletedAt) *time.Time {

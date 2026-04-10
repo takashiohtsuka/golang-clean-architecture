@@ -58,6 +58,6 @@ func (u *ManagementStaffUsecase) Create(ctx context.Context, i input.CreateManag
 	}
 
 	return u.uow.Do(ctx, func() error {
-		return u.managementStaffRepository.Create(staff)
+		return u.managementStaffRepository.Create(ctx, staff)
 	})
 }

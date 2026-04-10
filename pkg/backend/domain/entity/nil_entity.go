@@ -15,14 +15,15 @@ func (n *NilCompany) GetIsActive() bool { return false }
 
 type NilStore struct{}
 
-func (n *NilStore) IsNil() bool                       { return true }
-func (n *NilStore) GetID() uint                        { return 0 }
-func (n *NilStore) GetCompanyID() uint                 { return 0 }
-func (n *NilStore) GetBusinessType() bvo.BusinessType  { return bvo.EmptyBusinessType() }
-func (n *NilStore) GetContractPlan() bvo.ContractPlan  { return bvo.EmptyContractPlan() }
-func (n *NilStore) GetName() string                    { return "" }
-func (n *NilStore) GetIsActive() bool                  { return false }
-func (n *NilStore) GetOpenStatus() OpenStatus          { return "" }
+func (n *NilStore) IsNil() bool                      { return true }
+func (n *NilStore) GetID() uint                       { return 0 }
+func (n *NilStore) GetCompanyID() uint                { return 0 }
+func (n *NilStore) GetDistrictID() uint               { return 0 }
+func (n *NilStore) GetBusinessType() bvo.BusinessType { return bvo.EmptyBusinessType() }
+func (n *NilStore) GetContractPlan() bvo.ContractPlan { return bvo.EmptyContractPlan() }
+func (n *NilStore) GetName() string                   { return "" }
+func (n *NilStore) GetIsActive() bool                 { return false }
+func (n *NilStore) GetOpenStatus() OpenStatus         { return "" }
 
 type NilWoman struct{}
 

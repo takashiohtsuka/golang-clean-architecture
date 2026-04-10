@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	companyMapper "golang-clean-architecture/pkg/backend/adapter/mapper/company"
 	"golang-clean-architecture/pkg/backend/domain/entity"
 	"golang-clean-architecture/pkg/backend/usecase/outputport"
 	"golang-clean-architecture/pkg/domain/collection"
@@ -25,7 +26,7 @@ const companySelectSQL = "SELECT id, name, `rank`, is_active, created_at, update
 func toCompanyEntity(row map[string]any) *entity.Company {
 	return &entity.Company{
 		ID:        helper.ToUint(row["id"]),
-		Name:      func() string { s := helper.ToStringPtr(row["name"]); if s != nil { return *s }; return "" }(),
+		Name:      helper.ToString(row["name"]),
 		Rank:      helper.ToStringPtr(row["rank"]),
 		IsActive:  helper.ToBool(row["is_active"]),
 		CreatedAt: helper.ToTimePtr(row["created_at"]),
@@ -34,11 +35,11 @@ func toCompanyEntity(row map[string]any) *entity.Company {
 	}
 }
 
-func (r *companyRepository) FindAll(conditions []query.Condition) (collection.Collection[entity.CompanyEntity], error) {
+func (r *companyRepository) FindAll(ctx context.Context, conditions []query.Condition) (collection.Collection[entity.CompanyEntity], error) {
 	where, args := buildWhereClause(conditions)
 
 	var rows []map[string]any
-	if err := r.db.Raw(companySelectSQL+where, args...).Scan(&rows).Error; err != nil {
+	if err := r.db.WithContext(ctx).Raw(companySelectSQL+where, args...).Scan(&rows).Error; err != nil {
 		return collection.NewCollection[entity.CompanyEntity](nil), err
 	}
 
@@ -62,12 +63,10 @@ func (r *companyRepository) FindOne(ctx context.Context, conditions []query.Cond
 	return toCompanyEntity(rows[0]), nil
 }
 
-func (r *companyRepository) Create(c *entity.Company) error {
-	sql := "INSERT INTO companies (name, `rank`, is_active, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())"
-	return r.db.Exec(sql, c.Name, c.Rank, c.IsActive).Error
+func (r *companyRepository) Create(ctx context.Context, c *entity.Company) error {
+	return r.db.WithContext(ctx).Create(companyMapper.ToOrmModel(c)).Error
 }
 
-func (r *companyRepository) Update(c *entity.Company) error {
-	sql := "UPDATE companies SET name = ?, `rank` = ?, is_active = ?, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL"
-	return r.db.Exec(sql, c.Name, c.Rank, c.IsActive, c.ID).Error
+func (r *companyRepository) Update(ctx context.Context, c *entity.Company) error {
+	return r.db.WithContext(ctx).Save(companyMapper.ToOrmModel(c)).Error
 }

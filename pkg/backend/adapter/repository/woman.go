@@ -4,10 +4,12 @@ import (
 	"context"
 	"strings"
 
+	womanMapper "golang-clean-architecture/pkg/backend/adapter/mapper/woman"
 	"golang-clean-architecture/pkg/backend/domain/entity"
 	"golang-clean-architecture/pkg/backend/usecase/outputport"
 	"golang-clean-architecture/pkg/domain/collection"
 	"golang-clean-architecture/pkg/helper"
+	"golang-clean-architecture/pkg/infrastructure/model"
 	"golang-clean-architecture/pkg/usecase/query"
 
 	"gorm.io/gorm"
@@ -82,13 +84,7 @@ func groupWomen(rows []map[string]any) []*entity.Woman {
 			womanMap[womanID] = &entity.Woman{
 				ID:        womanID,
 				CompanyID: helper.ToUint(row["company_id"]),
-				Name: func() string {
-					s := helper.ToStringPtr(row["name"])
-					if s != nil {
-						return *s
-					}
-					return ""
-				}(),
+				Name:       helper.ToString(row["name"]),
 				Age:        helper.ToIntPtr(row["age"]),
 				Birthplace: helper.ToStringPtr(row["birthplace"]),
 				BloodType:  helper.ToStringPtr(row["blood_type"]),
@@ -108,13 +104,7 @@ func groupWomen(rows []map[string]any) []*entity.Woman {
 			imagesByID[womanID] = append(imagesByID[womanID], entity.WomanImage{
 				ID:      imageID,
 				WomanID: helper.ToUint(row["wi_woman_id"]),
-				Path: func() string {
-					s := helper.ToStringPtr(row["wi_path"])
-					if s != nil {
-						return *s
-					}
-					return ""
-				}(),
+				Path:      helper.ToString(row["wi_path"]),
 				CreatedAt: helper.ToTimePtr(row["wi_created_at"]),
 				UpdatedAt: helper.ToTimePtr(row["wi_updated_at"]),
 			})
@@ -130,11 +120,11 @@ func groupWomen(rows []map[string]any) []*entity.Woman {
 	return result
 }
 
-func (r *womanRepository) FindAll(conditions []query.Condition) (collection.Collection[entity.WomanEntity], error) {
+func (r *womanRepository) FindAll(ctx context.Context, conditions []query.Condition) (collection.Collection[entity.WomanEntity], error) {
 	where, args := buildWomanWhereClause(conditions)
 
 	var rows []map[string]any
-	if err := r.db.Raw(womanJoinSQL+where, args...).Scan(&rows).Error; err != nil {
+	if err := r.db.WithContext(ctx).Raw(womanJoinSQL+where, args...).Scan(&rows).Error; err != nil {
 		return collection.NewCollection[entity.WomanEntity](nil), err
 	}
 
@@ -146,11 +136,11 @@ func (r *womanRepository) FindAll(conditions []query.Condition) (collection.Coll
 	return collection.NewCollection(items), nil
 }
 
-func (r *womanRepository) FindOne(conditions []query.Condition) (entity.WomanEntity, error) {
+func (r *womanRepository) FindOne(ctx context.Context, conditions []query.Condition) (entity.WomanEntity, error) {
 	where, args := buildWomanWhereClause(conditions)
 
 	var rows []map[string]any
-	if err := r.db.Raw(womanJoinSQL+where, args...).Scan(&rows).Error; err != nil {
+	if err := r.db.WithContext(ctx).Raw(womanJoinSQL+where, args...).Scan(&rows).Error; err != nil {
 		return &entity.NilWoman{}, err
 	}
 
@@ -162,24 +152,17 @@ func (r *womanRepository) FindOne(conditions []query.Condition) (entity.WomanEnt
 }
 
 func (r *womanRepository) Create(ctx context.Context, w *entity.Woman) (uint, error) {
-	db := r.db.WithContext(ctx)
-	sql := `INSERT INTO women (company_id, name, age, birthplace, blood_type, hobby, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`
-	if err := db.Exec(sql, w.CompanyID, w.Name, w.Age, w.Birthplace, w.BloodType, w.Hobby, w.IsActive).Error; err != nil {
+	m := womanMapper.ToOrmModel(w)
+	if err := r.db.WithContext(ctx).Create(m).Error; err != nil {
 		return 0, err
 	}
-	var womanID uint
-	if err := db.Raw("SELECT LAST_INSERT_ID()").Scan(&womanID).Error; err != nil {
-		return 0, err
-	}
-	return womanID, nil
+	return m.ID, nil
 }
 
 func (r *womanRepository) Update(ctx context.Context, w *entity.Woman) error {
-	sql := `UPDATE women SET company_id = ?, name = ?, age = ?, birthplace = ?, blood_type = ?, hobby = ?, is_active = ?, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL`
-	return r.db.WithContext(ctx).Exec(sql, w.CompanyID, w.Name, w.Age, w.Birthplace, w.BloodType, w.Hobby, w.IsActive, w.ID).Error
+	return r.db.WithContext(ctx).Save(womanMapper.ToOrmModel(w)).Error
 }
 
 func (r *womanRepository) SaveImage(ctx context.Context, womanID uint, path string) error {
-	sql := `INSERT INTO woman_images (woman_id, path, created_at, updated_at) VALUES (?, ?, NOW(), NOW())`
-	return r.db.WithContext(ctx).Exec(sql, womanID, path).Error
+	return r.db.WithContext(ctx).Create(&model.WomanImage{WomanID: womanID, Path: path}).Error
 }

@@ -9,6 +9,9 @@ type StoreEntity interface {
 	IsNil() bool
 	GetID() uint
 	GetCompanyID() uint
+	GetDistrict() fvo.District
+	GetPrefecture() fvo.Prefecture
+	GetRegion() fvo.Region
 	GetBusinessType() fvo.BusinessType
 	GetContractPlan() fvo.ContractPlan
 	GetName() string
@@ -21,6 +24,9 @@ type WomanEntity interface {
 	IsNil() bool
 	GetID() uint
 	GetCompanyID() uint
+	GetDistrict() fvo.District
+	GetPrefecture() fvo.Prefecture
+	GetRegion() fvo.Region
 	GetName() string
 	GetAge() *int
 	GetBirthplace() *string
