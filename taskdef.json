@@ -1,0 +1,36 @@
+{
+  "family": "golang-trainning-task",
+  "requiresCompatibilities": ["FARGATE"],
+  "networkMode": "awsvpc",
+  "cpu": "256",
+  "memory": "512",
+  "taskRoleArn": "arn:aws:iam::364585378570:role/golang-trainning-ecs-task-role",
+  "executionRoleArn": "arn:aws:iam::364585378570:role/golang-trainning-ecs-execution-role",
+  "containerDefinitions": [
+    {
+      "name": "golang-trainning-app",
+      "image": "<IMAGE1_NAME>",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/golang-trainning",
+          "awslogs-region": "ap-northeast-1",
+          "awslogs-stream-prefix": "app"
+        }
+      },
+      "environment": [
+        {
+          "name": "APP_ENV",
+          "value": "production"
+        }
+      ]
+    }
+  ]
+}
