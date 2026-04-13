@@ -12,6 +12,11 @@ func NewRouter(e *echo.Echo, c controller.AppController) *echo.Echo {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	// ALBヘルスチェック用エンドポイント
+	e.GET("/health", func(ctx echo.Context) error {
+		return ctx.JSON(200, map[string]string{"status": "ok"})
+	})
+
 	e.GET("/users", func(context echo.Context) error { return c.User.GetUsers(context) })
 	e.POST("/users", func(context echo.Context) error { return c.User.CreateUser(context) })
 
