@@ -14,7 +14,7 @@ import (
 )
 
 type config struct {
-	SkipDB   bool
+	SkipDB bool `mapstructure:"skip_db"`
 	Database struct {
 		User                 string
 		Password             string
