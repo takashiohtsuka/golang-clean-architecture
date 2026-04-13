@@ -14,6 +14,7 @@ import (
 )
 
 type config struct {
+	SkipDB   bool
 	Database struct {
 		User                 string
 		Password             string

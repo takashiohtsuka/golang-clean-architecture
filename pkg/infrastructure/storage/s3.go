@@ -12,25 +12,37 @@ import (
 )
 
 func NewS3Client() (*s3.Client, error) {
-	cfg, err := config.LoadDefaultConfig(
-		context.Background(),
+	opts := []func(*config.LoadOptions) error{
 		config.WithRegion("ap-northeast-1"),
-		config.WithCredentialsProvider(
+	}
+
+	// accessKeyIDが設定されている場合はMinIO用の静的認証情報を使用
+	// 空の場合はTask Roleの認証情報を自動使用
+	if appconfig.C.Storage.AccessKeyID != "" {
+		opts = append(opts, config.WithCredentialsProvider(
 			credentials.NewStaticCredentialsProvider(
 				appconfig.C.Storage.AccessKeyID,
 				appconfig.C.Storage.SecretAccessKey,
 				"",
 			),
-		),
-	)
+		))
+	}
+
+	cfg, err := config.LoadDefaultConfig(context.Background(), opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.BaseEndpoint = aws.String(appconfig.C.Storage.Endpoint)
-		o.UsePathStyle = true // MinIOはパス形式が必要
-	})
+	var clientOpts []func(*s3.Options)
 
+	// endpointが設定されている場合はMinIO用（ローカル）
+	if appconfig.C.Storage.Endpoint != "" {
+		clientOpts = append(clientOpts, func(o *s3.Options) {
+			o.BaseEndpoint = aws.String(appconfig.C.Storage.Endpoint)
+			o.UsePathStyle = true // MinIOはパス形式が必要
+		})
+	}
+
+	client := s3.NewFromConfig(cfg, clientOpts...)
 	return client, nil
 }

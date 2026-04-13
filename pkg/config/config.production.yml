@@ -1,3 +1,5 @@
+skip_db: true
+
 database:
   user: root
   password: root
@@ -12,9 +14,9 @@ server:
   address: 8080
 
 storage:
-  endpoint: https://s3.amazonaws.com
-  accessKeyID: your-access-key-id
-  secretAccessKey: your-secret-access-key
+  endpoint: ""
+  accessKeyID: ""
+  secretAccessKey: ""
   useSSL: true
   buckets:
     womanImage: woman-images
