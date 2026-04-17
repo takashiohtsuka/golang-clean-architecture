@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/calls)",
+      "Bash(curl -s -X POST http://localhost:8080/calls -H 'Content-Type: application/json' -d '{:*)",
+      "Bash(curl -s -c /tmp/cookie.txt -o /dev/null -w \"%{http_code}\" http://localhost:8080/calls)",
+      "Bash(go get:*)",
+      "Bash(go build:*)",
+      "Bash(docker compose:*)",
+      "Bash(make seed-bench:*)",
+      "Bash(make test:*)",
+      "Bash(go test:*)",
+      "Bash(ls /Users/ohtsuka/customer_support_example/pkg/adapter/repository/query_builder*)"
+    ]
+  }
+}

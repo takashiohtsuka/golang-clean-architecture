@@ -3,7 +3,6 @@ package woman
 import (
 	"golang-clean-architecture/pkg/domain/collection"
 	"golang-clean-architecture/pkg/frontend/domain/entity"
-	fvo "golang-clean-architecture/pkg/frontend/domain/valueobject"
 	"golang-clean-architecture/pkg/helper"
 )
 
@@ -22,9 +21,6 @@ func MapToAggregate(rows []map[string]any) collection.Collection[entity.WomanEnt
 			womanOrder = append(womanOrder, womanID)
 			womanMap[womanID] = &entity.Woman{
 				ID:         womanID,
-				District:   fvo.NewDistrict(helper.ToUint(row["district_id"]), helper.ToString(row["district_name"])),
-				Prefecture: fvo.NewPrefecture(helper.ToUint(row["prefecture_id"]), helper.ToString(row["prefecture_name"])),
-				Region:     fvo.NewRegion(helper.ToUint(row["region_id"]), helper.ToString(row["region_name"])),
 				Name:       helper.ToString(row["woman_name"]),
 				Age:        helper.ToIntPtr(row["age"]),
 				Birthplace: helper.ToStringPtr(row["birthplace"]),

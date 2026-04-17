@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"golang-clean-architecture/pkg/domain/collection"
-	"golang-clean-architecture/pkg/frontend/domain/entity"
 	womanMapper "golang-clean-architecture/pkg/frontend/adapter/mapper/woman"
+	"golang-clean-architecture/pkg/frontend/domain/entity"
 	"golang-clean-architecture/pkg/frontend/usecase/outputport"
 
 	"gorm.io/gorm"
@@ -25,12 +25,6 @@ func (r *womanRegionRepository) FindPickupByRegion(ctx context.Context, regionID
 	sql := `
 		SELECT
 			w.id            AS woman_id,
-			d.id            AS district_id,
-			d.name          AS district_name,
-			p.id            AS prefecture_id,
-			p.name          AS prefecture_name,
-			r.id            AS region_id,
-			r.name          AS region_name,
 			w.name          AS woman_name,
 			w.age,
 			w.birthplace,
@@ -43,9 +37,7 @@ func (r *womanRegionRepository) FindPickupByRegion(ctx context.Context, regionID
 		FROM women w
 		JOIN woman_store_assignments wsa ON wsa.woman_id = w.id
 		JOIN stores s   ON s.id = wsa.store_id AND s.deleted_at IS NULL AND s.is_active = TRUE
-		JOIN districts d    ON s.district_id = d.id
-		JOIN prefectures p  ON d.prefecture_id = p.id
-		JOIN regions r      ON p.region_id = r.id
+		JOIN regions r      ON s.region_id = r.id
 		LEFT JOIN woman_images wi ON wi.woman_id = w.id
 		LEFT JOIN (
 			SELECT id, woman_id, title,

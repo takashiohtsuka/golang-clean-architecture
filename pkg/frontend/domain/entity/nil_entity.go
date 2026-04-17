@@ -24,18 +24,15 @@ func (n *NilStore) GetWomen() collection.Collection[WomanEntity]   {
 
 type NilWoman struct{}
 
-func (n *NilWoman) IsNil() bool                  { return true }
-func (n *NilWoman) GetID() uint                   { return 0 }
-func (n *NilWoman) GetCompanyID() uint            { return 0 }
-func (n *NilWoman) GetDistrict() fvo.District     { return fvo.EmptyDistrict() }
-func (n *NilWoman) GetPrefecture() fvo.Prefecture { return fvo.EmptyPrefecture() }
-func (n *NilWoman) GetRegion() fvo.Region         { return fvo.EmptyRegion() }
-func (n *NilWoman) GetName() string               { return "" }
-func (n *NilWoman) GetAge() *int                  { return nil }
-func (n *NilWoman) GetBirthplace() *string        { return nil }
-func (n *NilWoman) GetBloodType() *string         { return nil }
-func (n *NilWoman) GetHobby() *string             { return nil }
-func (n *NilWoman) GetIsActive() bool             { return false }
+func (n *NilWoman) IsNil() bool           { return true }
+func (n *NilWoman) GetID() uint           { return 0 }
+func (n *NilWoman) GetCompanyID() uint    { return 0 }
+func (n *NilWoman) GetName() string       { return "" }
+func (n *NilWoman) GetAge() *int          { return nil }
+func (n *NilWoman) GetBirthplace() *string { return nil }
+func (n *NilWoman) GetBloodType() *string  { return nil }
+func (n *NilWoman) GetHobby() *string      { return nil }
+func (n *NilWoman) GetIsActive() bool      { return false }
 func (n *NilWoman) GetStoreAssignments() collection.Collection[WomanStoreAssignment] {
 	return collection.NewCollection[WomanStoreAssignment](nil)
 }

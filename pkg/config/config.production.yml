@@ -19,5 +19,5 @@ storage:
   secretAccessKey: ""
   useSSL: true
   buckets:
-    womanImage: woman-images
-    blogImage: blog-images
+    womanImage: golang-trainning-woman-images
+    blogImage: golang-trainning-blog-images
